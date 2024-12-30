@@ -1,0 +1,51 @@
+job:
+  appName: spark test job
+  describe: spark test job
+  enableHiveSupport: true
+  config:
+    spark.master: local[*]
+    k2: v2
+
+source:
+  - type: hive
+    describe: description information
+    id: source1
+    config:
+      hostname: localhost
+      port: 3306
+      username: root
+      password: 123456
+      table: app_db.\.*
+      path: /user/bd/
+  - type: hdfs
+    id: source2
+    describe: description information
+    config:
+      path: /data/test.csv
+
+#transform:
+#  - type: filter
+#    describe: filter transform
+#    id: transform1
+#    config:
+#      k1: v1
+#    dependencies: [ source1 ]
+#  - type: map
+#    describe: map transform
+#    id: transform2
+#    config:
+#      k1: v1
+#    dependencies: [ transform1, source2 ]
+
+sink:
+  - type: mysql
+    describe: mysql sink
+    id: sink1
+    config:
+      hostname: localhost
+      port: 3306
+      username: root
+      password: 123456
+      database: test
+      table: test
+    dependency: transform2

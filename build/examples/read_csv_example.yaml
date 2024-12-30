@@ -1,0 +1,37 @@
+job:
+  appName: 'spark read csv example job'
+  describe: spark test job
+  enableHiveSupport: "true"
+
+source:
+  - type: file-common-source
+    describe: file common source,local file or hdfs file
+    id: source-1
+    config:
+      path: hdfs:///user/liuzehui/spark-pudding/examples/data/demo.csv
+      fileType: csv
+      streamRead: "false"
+      textDelimiter: ","
+      # dataframe force convert schema field and type，other field discard
+      forceConvertSchema: "true"
+      options:
+        header: "true"
+        delimiter: ","
+      schema:
+        col1: string
+        col2: string
+        col3: string
+        col4: string
+
+sink:
+  - type: console-sink
+    describe: show data on console
+    id: sink1
+    config:
+      isStreaming: false
+      numRows: 10
+      truncate: 20
+      vertical: false
+      printSchema: true
+#      level: 0
+    dependency: source-1

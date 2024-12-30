@@ -1,0 +1,30 @@
+job:
+  appName: spark test job
+  describe: spark test job
+  enableHiveSupport: true
+  config:
+    spark.master: local[*]
+    k2: v2
+
+source:
+  - type: mock_source
+    describe: just for test
+    id: source1
+
+transform:
+  - type: mock_filter
+    describe: just for test
+    id: trans_1
+    dependencies: [source1]
+
+sink:
+  - type: show-sink
+    describe: show data on console
+    id: sink1
+    config:
+      numRows: 10
+      truncate: 20
+      vertical: false
+      printSchema: true
+#      level: 0
+    dependency: trans_1

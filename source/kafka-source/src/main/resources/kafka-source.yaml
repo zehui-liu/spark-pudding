@@ -1,0 +1,21 @@
+source:
+  - type: kafka-source
+    describe: read data from kafka, support streaming and batch
+    id: source-1
+    config:
+      kafkaBootstrapServers: localhost:9092
+      subscribe: topic1
+      startingOffsets: earliest
+      options:
+        maxOffsetsPerTrigger: 1000
+        fetchOffsetRetries: 3
+        fetchMaxBytes: 52428800
+        autoOffsetReset: earliest
+        checkpointLocation: hdfs://uer/xxx
+      # dataframe force convert schema field and type，other field discard
+      forceConvertSchema: true
+      schema:
+        a1: string
+        a2: double
+        a3: date
+        a4: int

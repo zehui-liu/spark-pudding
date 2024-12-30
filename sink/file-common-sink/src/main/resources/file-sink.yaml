@@ -1,0 +1,19 @@
+sink:
+  - type: file-sink
+    describe: file common source,local file or hdfs file
+    id: sink1
+    config:
+      path: hdfs:///user/hive/test001.csv
+      filedType: csv
+      # when in batch write, saveMode is must exist
+      saveMode: append
+      # support stream writer
+      streamingWriter: true
+      # when streamingWriter set ture,timeoutMs is optional, wait stream stop time, long type
+      timeoutMs: 200
+      # when isStreaming set ture, outputMode is optional, default key is append
+      outputMode: overwrite
+      options:
+        header: true
+        delimiter: ","
+    dependency: transform2

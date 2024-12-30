@@ -1,0 +1,19 @@
+source:
+  - type: file-source
+    describe: file common source,local file or hdfs file
+    id: source-1
+    config:
+      path: hdfs:///user/hive/test001.csv,hdfs:///user/hive/test002.csv
+      filedType: csv
+      streamRead: true
+      textDelimiter: ","
+      # dataframe force convert schema field and type，other field discard
+      forceConvertSchema: true
+      options:
+        header: true
+        delimiter: ","
+      schema:
+        a1: string
+        a2: double
+        a3: date
+        a4: int
