@@ -32,8 +32,7 @@ object PuddingSpoon {
       throw new PuddingException("can not find configure file path parameter!")
     }
 
-    val pipelineCfgPath = "/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT/examples/read_csv_example.yaml"
-
+    val pipelineCfgPath = args(0)
     val fileType = getFileType(pipelineCfgPath)
 
     val jobPipelineConf = JobConfigureParser(fileType).parseFromFile(pipelineCfgPath)
