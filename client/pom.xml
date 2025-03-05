@@ -23,30 +23,41 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>spark-pudding-parent</artifactId>
-        <version>${revision}</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>client</artifactId>
 
     <properties>
-        <snakeyaml.version>2.6</snakeyaml.version>
-        <jackson.version>2.13.2</jackson.version>
+        <main-class>org.pudding.client.PuddingClient</main-class>
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>org.pudding</groupId>
             <artifactId>core</artifactId>
-            <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>4.7.5</version>
         </dependency>
-
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-core_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-launcher_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -58,6 +69,37 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>executable</shadedClassifierName>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main-class}</mainClass>
+                                </transformer>
+                            </transformers>
+                            <finalName>pudding-client</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.skife.maven</groupId>
+                <artifactId>really-executable-jar-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>really-executable-jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

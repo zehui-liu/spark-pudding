@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>spark-pudding-parent</artifactId>
-        <version>${revision}</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>sink</artifactId>
@@ -32,6 +32,8 @@
         <module>console-sink</module>
         <module>file-common-sink</module>
         <module>hive-sink</module>
+        <module>mysql-sink</module>
+        <module>hudi-sink</module>
     </modules>
 
 </project>

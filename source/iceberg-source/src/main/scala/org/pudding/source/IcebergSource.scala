@@ -40,7 +40,19 @@ class IcebergSource extends DataSource{
    * @return DataFrame
    */
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
+
+    // Catalogs with DataFrameReader
+
+    // Time travel
+
+    // Incremental read
+
+
+    // partition read
+
     // todo
+
+
     sparkSession.emptyDataFrame
   }
 }

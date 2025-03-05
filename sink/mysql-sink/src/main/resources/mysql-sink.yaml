@@ -1,0 +1,14 @@
+sink:
+  - type: mysql-sink
+    describe: batch or stream writer mysql data
+    id: sink1
+    config:
+      streamWriter: false
+      url: jdbc:mysql://localhost:3306/your_database_name?useSSL=false&serverTimezone=UTC
+      table: btl
+      user: root
+      password: 1234
+      mode: append
+      options :
+        k1 :v1
+    dependency: transform1

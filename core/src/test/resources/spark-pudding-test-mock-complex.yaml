@@ -1,0 +1,51 @@
+job:
+  appName: spark test job
+  describe: spark test job
+  sparkHome: '/Users/zhliu/env/bg-env/spark-3.3.0-bin-hadoop3'
+  sparkPuddingHome: '/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT'
+  master: yarn
+  deployMode: client
+  enableHiveSupport: true
+  config:
+    spark.master: local[*]
+    k2: v2
+
+source:
+  - type: mock_source1
+    describe: just for test
+    id: source1
+  - type: mock_source2
+    describe: just for test
+    id: source2
+  - type: mock_source3
+    describe: just for test
+    id: source3
+
+transform:
+  - type: mock-join
+    describe: just for test
+    id: transform_1
+    config:
+      joinColumn: id
+    dependencies: [source1, source2]
+  - type: mock-join
+    describe: just for test
+    id: transform_2
+    config:
+      joinColumn: id
+    dependencies: [transform_1, source3]
+  - type: mock_filter
+    describe: just for test
+    id: transform_3
+    dependencies: [transform_2]
+
+sink:
+  - type: show-sink
+    describe: show data on console
+    id: sink1
+    config:
+      numRows: 10
+      truncate: 20
+      vertical: false
+      printSchema: true
+    dependency: transform_3

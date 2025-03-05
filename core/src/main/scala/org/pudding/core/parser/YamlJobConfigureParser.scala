@@ -34,8 +34,8 @@ class YamlJobConfigureParser extends JobConfigureParser {
 
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  override def parseFromFile(pipelineCfgName: String): JobPipelineConf = {
-    val jsonStr = io.circe.yaml.parser.parse(new FileReader(pipelineCfgName)) match {
+  override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
+    val jsonStr = io.circe.yaml.parser.parse(pipelineCfgStr) match {
       case Right(json) => json.toString()
       case Left(errorInfo) => throw new PuddingException(s"parser yaml file error: $errorInfo")
     }
@@ -45,14 +45,4 @@ class YamlJobConfigureParser extends JobConfigureParser {
     defaultParse(configMap)
   }
 
-  override def parse(pipelineCfgText: String): JobPipelineConf = {
-    val jsonStr = io.circe.yaml.parser.parse(pipelineCfgText) match {
-      case Right(json) => json.toString()
-      case Left(errorInfo) => throw new PuddingException(s"parser yaml file error: $errorInfo")
-    }
-    // jsonStr must be json
-    val configMap = JsonMethods.parse(jsonStr).extract[Map[String, Any]]
-    checkMapValueNull(configMap)
-    defaultParse(configMap)
-  }
 }

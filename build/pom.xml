@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>spark-pudding-parent</artifactId>
-        <version>${revision}</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>build</artifactId>

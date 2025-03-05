@@ -17,36 +17,48 @@
 
 package org.pudding.sink
 
+import jodd.io.FileUtil
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.pudding.core.CommonTestUtils
+
+import java.nio.file.Paths
 
 /**
  * test for FileSink
  */
-class FileSinkTest extends AnyFunSuite with Matchers with BeforeAndAfterAll{
+class FileSinkTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 
+  private val utils = new CommonTestUtils("test for file sink")
   var sparkSession: SparkSession = _
 
-  var mockDataFrame: DataFrame =_
+  var mockDataFrame :DataFrame = _
+
+  case class Age(age: Int, id: Int)
 
   override def beforeAll(): Unit = {
-    sparkSession = SparkSession.builder()
-      .appName("test for hdfs source")
-      .master("local[2]")
-      .enableHiveSupport()
-      .getOrCreate()
-
-
-
-
+    utils.initLocalSparkSession()
+    sparkSession = utils.sparkSession
+    mockDataFrame = sparkSession.read.json(getClass.getClassLoader.getResource("test.json").getFile)
   }
 
   override def afterAll(): Unit = {
-    sparkSession.close()
+    utils.closeSparkSession()
   }
 
+  private val mockConfig = Some(Map(
+    "path" -> s"${Paths.get("").toAbsolutePath.toString}/sink/file-common-sink/src/test/resources/temp",
+    "fileType" -> "parquet",
+    "saveMode" -> "Overwrite",
+  ))
+
+
+  test("test file sink") {
+    new FileSink().writer(mockDataFrame,mockConfig)
+    println(mockConfig.get("path"))
+    FileUtil.deleteDir(mockConfig.get("path"))
+  }
 
 }

@@ -31,7 +31,13 @@ class BuildJobTest extends AnyFunSuite with Matchers with BeforeAndAfterAll{
 
   test("test for method buildSparkJob") {
     val yamlStr = Source.fromResource("spark-pudding-test-mock.yaml").mkString
-    val jobPipelineCfg = new YamlJobConfigureParser().parse(yamlStr)
+    val jobPipelineCfg = new YamlJobConfigureParser().parseFromString(yamlStr)
+    BuildJob.buildSparkJob(jobPipelineCfg)
+  }
+
+  test("test for a complex spark job") {
+    val yamlStr = Source.fromResource("spark-pudding-test-mock-complex.yaml").mkString
+    val jobPipelineCfg = new YamlJobConfigureParser().parseFromString(yamlStr)
     BuildJob.buildSparkJob(jobPipelineCfg)
   }
 }

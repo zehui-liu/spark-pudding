@@ -1,0 +1,9 @@
+transform:
+  - type: sql-transform
+    describe: handle dataframe use sql
+    id: source1
+    config:
+      tempView: tbl_temp
+      sql: 'select a, b, c from tbl_temp'
+      numPartitions: 300
+    dependencies: [source1]

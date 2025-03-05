@@ -1,6 +1,10 @@
 job:
   appName: spark test job
   describe: spark test job
+  sparkHome: '/Users/zhliu/env/bg-env/spark-3.3.0-bin-hadoop3'
+  sparkPuddingHome: '/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT'
+  master: yarn
+  deployMode: client
   enableHiveSupport: true
   config:
     spark.master: local[*]

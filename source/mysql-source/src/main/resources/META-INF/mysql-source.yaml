@@ -1,0 +1,12 @@
+source:
+  - type: mysql-source
+    describe: read mysql data
+    id: source-1
+    config:
+      url: jdbc:mysql://<hostname>:<port>/<database_name>?<parameters>
+      table: tbl
+      user: root
+      password: 'xxx'
+      options:
+        header: true
+        delimiter: ','

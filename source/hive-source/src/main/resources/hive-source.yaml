@@ -25,25 +25,3 @@ source:
         a2: double
         a3: date
         a4: int
-#支持 sql查询
-#支持 分区查询
-#支持 表达式过滤查询
-#支持 字段筛选
-#支持 schema覆盖
-
-
-
-
-#  val df = spark.read
-#  .option("basePath", "hdfs://path/to/hive/warehouse")
-#  .option("partitionColumn", "partition_key")
-#  .option("lowerBound", "2020-01-01")
-#  .option("upperBound", "2020-12-31")
-#  .option("numPartitions", "10")
-#  .option("fetchSize", "1000")
-#  .option("mergeSchema", "true")
-#  .option("timestampFormat", "yyyy-MM-dd HH:mm:ss")
-#  .option("dateFormat", "yyyy-MM-dd")
-#  .option("nullValue", "NULL")
-#  .option("mode", "FAILFAST")
-#  .table("your_hive_table")

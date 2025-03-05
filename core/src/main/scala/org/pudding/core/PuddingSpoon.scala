@@ -19,7 +19,23 @@ package org.pudding.core
 
 import java.util.Locale
 
+import org.rogach.scallop.{ScallopConf, ScallopOption}
+
 import org.pudding.core.spark.BuildJob
+
+class Conf(arguments: Array[String]) extends ScallopConf(arguments) {
+  val confType: ScallopOption[String] = opt[String](
+    name = "confType",
+    required = true,
+    descr = "configure file type"
+  )
+  val jobText: ScallopOption[String] = opt[String](
+    name = "jobText",
+    required = true,
+    descr = "configure Text"
+  )
+  verify()
+}
 
 /**
  * main class
@@ -27,15 +43,8 @@ import org.pudding.core.spark.BuildJob
 object PuddingSpoon {
 
   def main(args: Array[String]): Unit = {
-
-    if (args.length == 0) {
-      throw new PuddingException("can not find configure file path parameter!")
-    }
-
-    val pipelineCfgPath = args(0)
-    val fileType = getFileType(pipelineCfgPath)
-
-    val jobPipelineConf = JobConfigureParser(fileType).parseFromFile(pipelineCfgPath)
+    val conf = new Conf(args)
+    val jobPipelineConf = JobConfigureParser(conf.confType()).parseFromString(conf.jobText())
     BuildJob.buildSparkJob(jobPipelineConf)
   }
 
@@ -45,14 +54,15 @@ object PuddingSpoon {
    * @param pipelineCfgPath String
    * @return String
    */
-  private def getFileType(pipelineCfgPath: String): String = {
+  def getFileType(pipelineCfgPath: String): String = {
     pipelineCfgPath.lastIndexOf(".") match {
       case -1 =>
         throw new PuddingException("configure file must end with .json or .conf or .yaml!")
       case index =>
         val fileType = pipelineCfgPath.substring(index + 1).toLowerCase(Locale.ROOT)
         fileType match {
-          case "yaml" | "json" | "conf" => fileType
+          case "yaml" | "json" => fileType
+          case "conf" => "hocon"
           case _ => throw new PuddingException(
             s"unsupported configure file type : $fileType, configure file must end with .json or .conf or .yaml!")
         }

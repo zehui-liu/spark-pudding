@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>spark-pudding-parent</artifactId>
-        <version>${revision}</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>core</artifactId>
@@ -34,41 +34,38 @@
             <artifactId>scala-library</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>io.circe</groupId>
             <artifactId>circe-yaml_${scala.binary.version}</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.rogach</groupId>
+            <artifactId>scallop_${scala.binary.version}</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -112,5 +109,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

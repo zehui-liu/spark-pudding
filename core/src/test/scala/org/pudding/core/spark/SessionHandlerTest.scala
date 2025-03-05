@@ -27,8 +27,12 @@ import org.pudding.core.configure.JobConf
  */
 class SessionHandlerTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 
-  private val mockJobConf = JobConf(
+  private val mockJobConf: JobConf = JobConf(
+    "",
+    Option.empty[String],
     "local test",
+    "",
+    "",
     Option("describe"),
     Option("true"),
     Option(Map("spark.master" -> "local[2]"))

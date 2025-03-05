@@ -1,1 +1,4 @@
 org.pudding.core.spark.mock.MockDataSource
+org.pudding.core.spark.mock.MockDataSource1
+org.pudding.core.spark.mock.MockDataSource2
+org.pudding.core.spark.mock.MockDataSource3

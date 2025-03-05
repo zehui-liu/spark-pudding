@@ -31,23 +31,47 @@ limitations under the License.
             <directory>../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>README*</include>
                 <include>LICENSE*</include>
                 <include>NOTICE*</include>
             </includes>
         </fileSet>
 
-        <!-- copy start scripts -->
         <fileSet>
             <directory>bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
 
-        <!-- copy examples-->
+        <fileSet>
+            <directory>conf</directory>
+            <outputDirectory>conf</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>doc</directory>
+            <outputDirectory>doc</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
         <fileSet>
             <directory>examples</directory>
             <outputDirectory>examples</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>log</directory>
+            <outputDirectory>log</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../client/target</directory>
+            <includes>
+                <include>pudding-client.jar</include>
+            </includes>
+            <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
 
@@ -80,6 +104,15 @@ limitations under the License.
         </fileSet>
 
         <fileSet>
+            <directory>../source/hudi-source/target</directory>
+            <includes>
+                <include>hudi-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
             <directory>../source/jdbc-common-source/target</directory>
             <includes>
                 <include>jdbc-common-source-${project.version}.jar</include>
@@ -97,7 +130,33 @@ limitations under the License.
             <fileMode>0644</fileMode>
         </fileSet>
 
+        <fileSet>
+            <directory>../source/mysql-source/target</directory>
+            <includes>
+                <include>mysql-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../source/elasticsearch-source/target</directory>
+            <includes>
+                <include>elasticsearch-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
         <!-- transform jar add libs-->
+        <fileSet>
+            <directory>../transform/sql-transform/target</directory>
+            <includes>
+                <include>sql-transform-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
 
         <!-- sink jar add libs-->
         <fileSet>
@@ -113,6 +172,33 @@ limitations under the License.
             <directory>../sink/file-common-sink/target</directory>
             <includes>
                 <include>file-common-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/hive-sink/target</directory>
+            <includes>
+                <include>hive-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/hudi-sink/target</directory>
+            <includes>
+                <include>hudi-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/mysql-sink/target</directory>
+            <includes>
+                <include>mysql-sink-${project.version}.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
             <fileMode>0644</fileMode>

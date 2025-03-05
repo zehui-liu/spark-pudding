@@ -3,10 +3,9 @@ sink:
     describe: show data on console
     id: sink1
     config:
-      isStreaming: false
+      isStream: false
       numRows: 10
       truncate: 20
       vertical: false
       printSchema: true
-#      level: 0
     dependency: transform2

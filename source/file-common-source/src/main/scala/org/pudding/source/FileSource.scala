@@ -19,6 +19,7 @@ package org.pudding.source
 
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+
 import org.pudding.core.PuddingException
 import org.pudding.core.definition.DataSource
 
@@ -74,10 +75,7 @@ class FileSource extends DataSource {
     val fileType = this.getMapValueThrow[String](cfg, FILE_TYPE_KEY)
 
     // support steam or batch read, default batch read
-    val streamRead = cfg.get(STREAM_READ_KEY) match {
-      case Some(streamRead) => streamRead.asInstanceOf[Boolean]
-      case None => false
-    }
+    val streamRead = cfg.getOrElse(STREAM_READ_KEY, false).asInstanceOf[Boolean]
 
     // options parameter is optional
     val options = cfg.get(OPTIONS_KEY) match {
@@ -141,6 +139,7 @@ class FileSource extends DataSource {
             s"schemas size is $schemasSize can not more" +
               s" than dataframe field size is $dataFrameLength, check schema configure!")
         }
+        originalDataFrame.show(2)
         originalDataFrame.select(this.getColumns(schemas).toArray: _*)
       }
     } else {

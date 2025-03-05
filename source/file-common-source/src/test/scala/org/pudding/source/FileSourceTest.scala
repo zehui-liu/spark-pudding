@@ -1,6 +1,24 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.pudding.source
 
 import org.apache.spark.sql.SparkSession
+import org.pudding.core.CommonTestUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -12,25 +30,24 @@ import java.sql.Date
  */
 class FileSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 
+  private val utils = new CommonTestUtils("test for file source")
+
   var sparkSession: SparkSession = _
 
   override def beforeAll(): Unit = {
-    sparkSession = SparkSession.builder()
-      .appName("test for hdfs source")
-      .master("local[2]")
-      .enableHiveSupport()
-      .getOrCreate()
+    utils.initLocalSparkSession()
+    sparkSession = utils.sparkSession
   }
 
   override def afterAll(): Unit = {
-    sparkSession.close()
+    utils.closeSparkSession()
   }
 
   private val mockCsvConfig = Some(Map(
-    "path" -> getClass.getClassLoader.getResource("test.csv").getFile,
+    "path" -> getClass.getClassLoader.getResource("csv/").getFile,
     "fileType" -> "csv",
-    "forceConvertSchema" -> "true",
-    "options" -> null,
+    "forceConvertSchema" -> true,
+    "options" -> Map("header" -> "true"),
     "schema" -> Map(
       "a1" -> "string",
       "a2" -> "double",
@@ -57,9 +74,9 @@ class FileSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
   }
 
   private val mockTextConfig = Some(Map(
-    "path" -> getClass.getClassLoader.getResource("test.text").getFile,
+    "path" -> getClass.getClassLoader.getResource("text/").getFile,
     "fileType" -> "text",
-    "forceConvertSchema" -> "true",
+    "forceConvertSchema" -> true,
     "options" -> Map(
       "encoding" -> "UTF-8"
     ),
@@ -87,9 +104,9 @@ class FileSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
   }
 
   private val mockJsonConfig = Some(Map(
-    "path" -> getClass.getClassLoader.getResource("test.json").getFile,
+    "path" -> getClass.getClassLoader.getResource("json/").getFile,
     "fileType" -> "json",
-    "forceConvertSchema" -> "true",
+    "forceConvertSchema" -> true,
     "options" -> Map(
       "encoding" -> "UTF-8"
     ),
@@ -117,10 +134,10 @@ class FileSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     assert(rows.head.get(3) == Date.valueOf("2024-11-21"))
   }
 
-  private val mockHdfsJsonConfig = Some(Map(
-    "path" -> "hdfs://localhost:9000/tmp/spark/test.json",
-    "fileType" -> "json",
-    "forceConvertSchema" -> "true",
+  private val mockOrcConfig = Some(Map(
+    "path" -> getClass.getClassLoader.getResource("orc/").getFile,
+    "fileType" -> "orc",
+    "forceConvertSchema" -> true,
     "options" -> Map(
       "encoding" -> "UTF-8"
     ),
@@ -133,15 +150,48 @@ class FileSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
   ))
 
   test("test orc file") {
-    val dataFrame = new FileSource().initData(sparkSession, mockHdfsJsonConfig)
+    val dataFrame = new FileSource().initData(sparkSession, mockOrcConfig)
+    val schema = dataFrame.schema
+    val cfg = mockTextConfig.get
 
-    dataFrame.printSchema()
-    dataFrame.show()
+    assert(schema.size == cfg("schema").asInstanceOf[Map[String, String]].size)
+    assert(schema.toDDL == "`a1` STRING,`a2` DOUBLE,`a3` INT,`a4` DATE")
 
+    val rows = dataFrame.collect()
+    assert(rows.head.get(0) == "zhangSan")
+    assert(rows.head.get(1) == 3.1415926)
+    assert(rows.head.get(2) == 1)
+    assert(rows.head.get(3) == Date.valueOf("2024-11-21"))
   }
 
-  test("test parquet file") {
+  private val mockParquetConfig = Some(Map(
+    "path" -> getClass.getClassLoader.getResource("parquet/").getFile,
+    "fileType" -> "parquet",
+    "forceConvertSchema" -> true,
+    "options" -> Map(
+      "encoding" -> "UTF-8"
+    ),
+    "schema" -> Map(
+      "a1" -> "string",
+      "a2" -> "double",
+      "a3" -> "int",
+      "a4" -> "date"
+    )
+  ))
 
+  test("test parquet file") {
+    val dataFrame = new FileSource().initData(sparkSession, mockParquetConfig)
+    val schema = dataFrame.schema
+    val cfg = mockTextConfig.get
+
+    assert(schema.size == cfg("schema").asInstanceOf[Map[String, String]].size)
+    assert(schema.toDDL == "`a1` STRING,`a2` DOUBLE,`a3` INT,`a4` DATE")
+
+    val rows = dataFrame.collect()
+    assert(rows.head.get(0) == "zhangSan")
+    assert(rows.head.get(1) == 3.1415926)
+    assert(rows.head.get(2) == 1)
+    assert(rows.head.get(3) == Date.valueOf("2024-11-21"))
   }
 
 

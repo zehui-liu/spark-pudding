@@ -26,7 +26,7 @@ import org.pudding.core.definition.DataSink
  */
 class ConsoleSink extends DataSink {
 
-  private val IS_STREAMING_KEY = "isStreaming"
+  private val IS_STREAM_KEY = "isStream"
 
   /**
    * default 20 rows
@@ -49,11 +49,6 @@ class ConsoleSink extends DataSink {
   private val PRINT_SCHEMA_KEY = "printSchema"
 
   /**
-   * default Int.MaxValue
-   */
-  private val LEVEL_KEY = "level"
-
-  /**
    * Data sink identifier，Require implementation of class unique, And consistent with the configuration
    *
    * @return String
@@ -69,14 +64,14 @@ class ConsoleSink extends DataSink {
   override def writer(dataFrame: DataFrame, config: Option[Map[String, Any]]): Unit = {
     config match {
       case Some(cfg) =>
-        if (cfg.getOrElse(IS_STREAMING_KEY, false).asInstanceOf[Boolean]) {
+        if (cfg.getOrElse(IS_STREAM_KEY, false).asInstanceOf[Boolean]) {
           val streamingQuery = dataFrame.writeStream
             .format("console")
             .start()
           streamingQuery.awaitTermination()
         } else {
           if (cfg.getOrElse(PRINT_SCHEMA_KEY, false).asInstanceOf[Boolean]) {
-            dataFrame.printSchema(cfg.getOrElse(LEVEL_KEY, Int.MaxValue).asInstanceOf[Int])
+            dataFrame.printSchema()
           }
 
           dataFrame.show(

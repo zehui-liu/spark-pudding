@@ -1,6 +1,6 @@
 sink:
   - type: file-sink
-    describe: file common source,local file or hdfs file
+    describe: file common sink,local file or hdfs file
     id: sink1
     config:
       path: hdfs:///user/hive/test001.csv

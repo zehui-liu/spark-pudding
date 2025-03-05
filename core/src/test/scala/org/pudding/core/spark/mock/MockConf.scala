@@ -17,6 +17,8 @@
 
 package org.pudding.core.spark.mock
 
+import scala.collection.immutable._
+
 import org.pudding.core.configure.{JobConf, SinkConf, SourceConf, TransformConf}
 
 
@@ -26,7 +28,11 @@ import org.pudding.core.configure.{JobConf, SinkConf, SourceConf, TransformConf}
 object MockConf {
 
   val mockJobCfg: JobConf = JobConf(
+    "",
+    Option.empty[String],
     "local test",
+    "",
+    "",
     Option("describe"),
     Option("true"),
     Option(Map("spark.master" -> "local[2]"))

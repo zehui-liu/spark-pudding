@@ -21,7 +21,11 @@ package org.pudding.core.configure
  * job confugure
  */
 case class JobConf(
+  sparkHome: String,
+  sparkPuddingHome: Option[String],
   appName: String,
+  master: String,
+  deployMode: String,
   describe: Option[String],
   enableHiveSupport: Option[String],
   config: Option[Map[String, String]]

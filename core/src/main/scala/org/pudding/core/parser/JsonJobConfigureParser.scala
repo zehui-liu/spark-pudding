@@ -32,29 +32,10 @@ class JsonJobConfigureParser extends JobConfigureParser {
 
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  /**
-   * from file path parse configuration to class configuration
-   *
-   * @param pipelineCfgPath Path
-   * @return JobPipelineCfg
-   */
-  override def parseFromFile(pipelineCfgPath: String): JobPipelineConf = {
-    val source = Source.fromFile(pipelineCfgPath)
-    val jsonString = try source.mkString finally source.close()
-    val configMap = JsonMethods.parse(jsonString).extract[Map[String, Any]]
+  override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
+    val configMap = JsonMethods.parse(pipelineCfgStr).extract[Map[String, Any]]
     checkMapValueNull(configMap)
     defaultParse(configMap)
   }
 
-  /**
-   * from text configuration to class configuration
-   *
-   * @param pipelineCfgText String
-   * @return JobPipelineCfg
-   */
-  override def parse(pipelineCfgText: String): JobPipelineConf = {
-    val configMap = JsonMethods.parse(pipelineCfgText).extract[Map[String, Any]]
-    checkMapValueNull(configMap)
-    defaultParse(configMap)
-  }
 }

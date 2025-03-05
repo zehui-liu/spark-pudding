@@ -29,27 +29,8 @@ import org.pudding.core.JobConfigureParser
  */
 class HoconJobConfigureParser extends JobConfigureParser {
 
-  /**
-   * from file path parse configuration to class configuration
-   *
-   * @param pipelineCfgPath Path
-   * @return JobPipelineCfg
-   */
-  override def parseFromFile(pipelineCfgPath: String): JobPipelineConf = {
-    val config: Config = ConfigFactory.load(pipelineCfgPath)
-    val configMap = toMapConfig(config)
-    checkMapValueNull(configMap)
-    defaultParse(configMap)
-  }
-
-  /**
-   * from text configuration to class configuration
-   *
-   * @param pipelineCfgText String
-   * @return JobPipelineCfg
-   */
-  override def parse(pipelineCfgText: String): JobPipelineConf = {
-    val config = ConfigFactory.parseString(pipelineCfgText)
+  override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
+    val config = ConfigFactory.parseString(pipelineCfgStr)
     val configMap = toMapConfig(config)
     checkMapValueNull(configMap)
     defaultParse(configMap)

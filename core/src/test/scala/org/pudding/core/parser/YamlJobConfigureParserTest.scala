@@ -32,7 +32,8 @@ class YamlJobConfigureParserTest extends AnyFunSuite with Matchers {
   val yamlJobConfigureParser = new YamlJobConfigureParser()
 
   test("test method parse") {
-    val jobPipelineCfg = new YamlJobConfigureParser().parse(Source.fromResource("spark-pudding-test.yaml").mkString)
+    val jobPipelineCfg = new YamlJobConfigureParser()
+      .parseFromString(Source.fromResource("spark-pudding-test.yaml").mkString)
     val sources = jobPipelineCfg.sources
     val transforms = jobPipelineCfg.transforms
     val sinks = jobPipelineCfg.sinks
@@ -61,7 +62,7 @@ class YamlJobConfigureParserTest extends AnyFunSuite with Matchers {
   }
 
   test("test method parse without transform") {
-    val jobPipelineCfg = new YamlJobConfigureParser().parse(
+    val jobPipelineCfg = new YamlJobConfigureParser().parseFromString(
       Source.fromResource("spark-pudding-test-withoutTransform.yaml").mkString)
 
     assert(jobPipelineCfg.transforms.isEmpty)

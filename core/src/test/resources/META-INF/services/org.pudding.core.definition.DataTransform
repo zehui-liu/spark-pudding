@@ -1,1 +1,2 @@
 org.pudding.core.spark.mock.MockFilterTransform
+org.pudding.core.spark.mock.MockJoinTransform

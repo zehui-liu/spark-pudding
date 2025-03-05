@@ -1,0 +1,27 @@
+source:
+  - type: iceberg-source
+    describe: read iceberg table
+    id: source-1
+    config:
+      table: test1
+      options:
+        basePath: "hdfs://path/to/hive/warehouse"
+        partitionColumn: "partition_key"
+        lowerBound: "2020-01-01"
+        upperBound: "2020-12-31"
+        numPartitions: "10"
+        fetchSize: "1000"
+        mergeSchema: "true"
+        timestampFormat: "yyyy-MM-dd HH:mm:ss"
+        dateFormat: "yyyy-MM-dd"
+        nullValue: "NULL"
+        mode: "FAILFAST"
+        timeZone: "UTC"
+        locale: "en-US"
+      # dataframe force convert schema field and type，other field discard
+      forceConvertSchema: true
+      schema:
+        a1: string
+        a2: double
+        a3: date
+        a4: int

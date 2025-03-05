@@ -6,12 +6,12 @@ source:
       path: hdfs:///user/hive/test001.csv,hdfs:///user/hive/test002.csv
       filedType: csv
       streamRead: true
-      textDelimiter: ","
+      textDelimiter: ','
       # dataframe force convert schema field and type，other field discard
       forceConvertSchema: true
       options:
         header: true
-        delimiter: ","
+        delimiter: ','
       schema:
         a1: string
         a2: double

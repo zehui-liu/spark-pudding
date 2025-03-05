@@ -1,7 +1,18 @@
 job:
+  sparkHome: '/Users/zhliu/env/bg-env/spark-3.3.0-bin-hadoop3'
+  sparkPuddingHome: '/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT'
   appName: 'spark read csv example job'
+  master: yarn
+  deployMode: client 
   describe: spark test job
-  enableHiveSupport: "true"
+  enableHiveSupport: 'true'
+  config:
+    spark.executor.memory: 512m
+    spark.executor.cores: '1'
+    spark.driver.memory: '512m'
+    spark.driver.cores: '1'
+    spark.executor.instances: '1'
+
 
 source:
   - type: file-common-source
@@ -10,13 +21,13 @@ source:
     config:
       path: hdfs:///user/liuzehui/spark-pudding/examples/data/demo.csv
       fileType: csv
-      streamRead: "false"
-      textDelimiter: ","
+      streamRead: false
+      textDelimiter: ','
       # dataframe force convert schema field and type，other field discard
-      forceConvertSchema: "true"
+      forceConvertSchema: true
       options:
-        header: "true"
-        delimiter: ","
+        header: 'true'
+        delimiter: ','
       schema:
         col1: string
         col2: string

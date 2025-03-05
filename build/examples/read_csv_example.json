@@ -1,0 +1,57 @@
+{
+  "job": {
+      "sparkHome": "/Users/zhliu/env/bg-env/spark-3.3.0-bin-hadoop3",
+      "sparkPuddingHome": "/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT",
+      "appName": "spark read csv example job",
+      "master": "yarn",
+      "deployMode": "client",
+      "describe": "spark test job",
+      "enableHiveSupport": "true",
+      "config": {
+          "spark.executor.memory": "512m",
+          "spark.executor.cores": "1",
+          "spark.driver.memory": "512m",
+          "spark.driver.cores": "1",
+          "spark.executor.instances": "1"
+      }
+  },
+  "source": [
+      {
+          "type": "file-common-source",
+          "describe": "file common source,local file or hdfs file",
+          "id": "source-1",
+          "config": {
+              "path": "hdfs:///user/liuzehui/spark-pudding/examples/data/demo.csv",
+              "fileType": "csv",
+              "streamRead": false,
+              "textDelimiter": ",",
+              "forceConvertSchema": true,
+              "options": {
+                  "header": "true",
+                  "delimiter": ","
+              },
+              "schema": {
+                  "col1": "string",
+                  "col2": "string",
+                  "col3": "string",
+                  "col4": "string"
+              }
+          }
+      }
+  ],
+  "sink": [
+      {
+          "type": "console-sink",
+          "describe": "show data on console",
+          "id": "sink1",
+          "config": {
+              "isStreaming": false,
+              "numRows": 10,
+              "truncate": 20,
+              "vertical": false,
+              "printSchema": true
+          },
+          "dependency": "source-1"
+      }
+  ]
+}

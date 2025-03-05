@@ -31,22 +31,14 @@ import org.pudding.core.parser._
 trait JobConfigureParser extends EasyHandle {
 
   /**
-   * from file path parse configuration to class configuration
-   *
-   * @param pipelineCfgPath Path
-   * @return JobPipelineCfg
-   */
-  def parseFromFile(pipelineCfgPath: String): JobPipelineConf
-
-  /**
    * from text configuration to class configuration
    *
-   * @param pipelineCfgText String
+   * @param pipelineCfgStr String
    * @return JobPipelineCfg
    */
-  def parse(pipelineCfgText: String): JobPipelineConf
+  def parseFromString(pipelineCfgStr: String): JobPipelineConf
 
-  def defaultParse(configMap: Map[String, Any]): JobPipelineConf = {
+  protected def defaultParse(configMap: Map[String, Any]): JobPipelineConf = {
     val sourceCfs = extractConf[Seq[Map[String, Any]], Seq[SourceConf]](configMap, SOURCE_KEY, parseSource)
     // transformCfs is optional
     val transformCfs = configMap.get(TRANSFORM_KEY) match {
@@ -81,7 +73,11 @@ object JobConfigureParser extends EasyHandle {
   /**
    * jobConf key
    */
+  private val SPARK_HOME = "sparkHome"
+  private val SPARK_PUDDING_HOME = "sparkPuddingHome"
   private val APP_NAME_KEY = "appName"
+  private val MASTER = "master"
+  private val DEPLOY_MODE = "deployMode"
   private val ENABLE_HIVE_SUPPORT_KEY = "enableHiveSupport"
 
   def apply(confType: String): JobConfigureParser = {
@@ -131,7 +127,11 @@ object JobConfigureParser extends EasyHandle {
 
   private def parseJob(jobMap: Map[String, Any]): JobConf = {
     JobConf(
+      sparkHome = getMapValueThrow[String](jobMap, SPARK_HOME),
+      sparkPuddingHome = Option(jobMap(SPARK_PUDDING_HOME).asInstanceOf[String]),
       appName = getMapValueThrow[String](jobMap, APP_NAME_KEY),
+      master = getMapValueThrow[String](jobMap, MASTER),
+      deployMode = getMapValueThrow[String](jobMap, DEPLOY_MODE),
       describe = Option(jobMap(DESCRIBE_KEY).asInstanceOf[String]),
       enableHiveSupport = Option(jobMap(ENABLE_HIVE_SUPPORT_KEY).toString),
       config = extractConfig(jobMap)
