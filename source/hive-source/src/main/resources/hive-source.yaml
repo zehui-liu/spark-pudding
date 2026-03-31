@@ -1,9 +1,10 @@
 source:
-  - type: file-source
-    describe: file common source,local file or hdfs file
+  - type: hive-source
+    describe: read hive table
     id: source-1
     config:
       table: test1
+      conditionExpr: age > 21 and name = 'tom'
       options:
         basePath: "hdfs://path/to/hive/warehouse"
         partitionColumn: "partition_key"

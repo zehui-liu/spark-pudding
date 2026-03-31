@@ -17,8 +17,6 @@
 
 package org.pudding.core.parser
 
-import java.io.FileReader
-
 import scala.collection.immutable._
 
 import org.json4s.jackson.{JsonMethods, Serialization}

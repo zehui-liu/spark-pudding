@@ -18,7 +18,7 @@
 package org.pudding.core.configure
 
 /**
- * job confugure
+ * job configure
  */
 case class JobConf(
   sparkHome: String,

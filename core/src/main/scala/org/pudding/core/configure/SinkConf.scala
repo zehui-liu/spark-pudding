@@ -18,7 +18,7 @@
 package org.pudding.core.configure
 
 /**
- * sink confugure
+ * sink configure
  */
 case class SinkConf(
   `type`: String,

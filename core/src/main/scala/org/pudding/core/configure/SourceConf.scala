@@ -18,7 +18,7 @@
 package org.pudding.core.configure
 
 /**
- * source confugure
+ * source configure
  */
 case class SourceConf(
   `type`: String,

@@ -17,8 +17,6 @@
 
 package org.pudding.core.parser
 
-import scala.io.Source
-
 import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.{JsonMethods, Serialization}
 

@@ -66,6 +66,9 @@ class HiveSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll{
   ))
 
 
+  /**
+   * I used mac work. run this test need local have hive service.
+   */
   test("link hive metastore") {
 
     sparkSession.sql("show databases").show()

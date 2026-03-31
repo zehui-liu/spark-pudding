@@ -57,7 +57,7 @@ object DataTransform {
 
   /**
    * factory method
-   * @param transformDefs Seq[TransformDef]
+   * @param transformCfs Seq[TransformDef]
    * @return map[id, (Transform, config map)]
    */
   def apply(transformCfs: Seq[TransformConf]): Map[String, (DataTransform, Option[Map[String, Any]])] = {
@@ -65,9 +65,9 @@ object DataTransform {
     val serviceLoader = ServiceLoader.load(classOf[DataTransform])
     val identifierAndServices = serviceLoader.iterator().asScala.toList.map(s => s.identifier -> s).toMap
 
-    transformCfs.map(t => (t.id, (identifierAndServices.get(t.`type`) match {
-      case Some(transform) => transform
-      case _ => throw new PuddingException(s"${t.`type`} can not get Transform implement!")
-    }) -> t.config)).toMap
+    transformCfs.map(t => (t.id,
+      identifierAndServices.getOrElse(t.`type`,
+        throw new PuddingException(s"${t.`type`} can not get Transform implement!")) -> t.config))
+      .toMap
   }
 }

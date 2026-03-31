@@ -34,7 +34,7 @@ trait EasyHandle {
   def getMapValueThrow[T](cf: Map[String, Any], k: String): T = {
     cf.get(k) match {
       case Some(v) =>
-          v.asInstanceOf[T]
+        v.asInstanceOf[T]
       case None =>
         throw new PuddingException(s"can not find param: $k, $k must be exist!")
     }
@@ -87,7 +87,7 @@ trait EasyHandle {
    * build row from string and schema type
    *
    * @param str String
-   * @param v String
+   * @param v   String
    * @return Any
    */
   def buildRow(str: String, v: String): Any = {

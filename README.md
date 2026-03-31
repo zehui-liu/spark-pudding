@@ -7,6 +7,10 @@ A micro framework for data integration and processing based on Apache Spark.
 - Support data sources based on interface expansion and complex data processing logic.
 - Support Apache Spark stream batch integration.
 
+## NOTE
+
+This project code is independently developed by individuals.No affiliation with the creator's company！
+
 ## Building from source
 
 Prerequisites for building Spark Pudding:
@@ -213,3 +217,105 @@ and you can use spark client start a spark job like this command:
 | source    | Abstracting the ability of Apache Spark to read data as a source, the interface functionality is defined in the DataSource class. |
 | transform | Abstracting Apache Spark's ability to process data into a transform, supporting Apache Spark's complex data processing capabilities, and defining interface functionality in the DataTransform class. |
 | sink      | Abstracting the ability of Apache Spark to write data as a sink, the interface functionality is defined in the DataSink class. |
+
+## Iceberg Source Configuration
+
+The Iceberg source supports reading data from Apache Iceberg tables with various options:
+
+```json
+{
+  "source": [
+    {
+      "type": "iceberg-source",
+      "describe": "read iceberg table",
+      "id": "source-1",
+      "config": {
+        "table": "database.table_name",
+        "catalog": "spark_catalog",
+        "filterExpr": "date >= '2023-01-01'",
+        "snapshotId": 123456789,
+        "options": {
+          "basePath": "hdfs://path/to/hive/warehouse"
+        },
+        "forceConvertSchema": true,
+        "schema": {
+          "column1": "string",
+          "column2": "int",
+          "column3": "double"
+        }
+      }
+    }
+  ]
+}
+```
+
+Supported configuration options:
+- `table`: The table name in the format `database.table_name` or full table identifier
+- `path`: Alternative to table, specify the direct path to the Iceberg table
+- `catalog`: The catalog name (default: "spark_catalog")
+- `filterExpr`: SQL filter expression to apply to the data
+- `snapshotId`: Read from a specific snapshot ID
+- `asOfTimestamp`: Read from a specific timestamp
+- `branch`: Read from a specific branch
+- `tag`: Read from a specific tag
+- `options`: Additional Iceberg options as key-value pairs
+- `forceConvertSchema`: Whether to force convert the schema (default: false)
+- `schema`: Schema definition for forceConvertSchema (required if forceConvertSchema is true)
+
+## Hudi Source Configuration
+
+The Hudi source supports reading data from Apache Hudi tables with various query types:
+
+```json
+{
+  "source": [
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with incremental query",
+      "id": "source-1",
+      "config": {
+        "table": "default.test_table",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table",
+        "queryType": "incremental",
+        "beginTime": "20230101000000",
+        "endTime": "20230102000000",
+        "options": {
+          "hoodie.datasource.read.use.newer.timeline": "true"
+        }
+      }
+    },
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with cdc query",
+      "id": "source-2",
+      "config": {
+        "table": "default.test_table_cdc",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table_cdc",
+        "queryType": "cdc"
+      }
+    },
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with read_optimized query",
+      "id": "source-3",
+      "config": {
+        "table": "default.test_table_ro",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table_ro",
+        "queryType": "read_optimized"
+      }
+    }
+  ]
+}
+```
+
+Supported configuration options:
+- `table`: The table name
+- `tablePath`: The path to the Hudi table
+- `queryType`: The query type to use (default: "snapshot")
+  - `snapshot`: Read the latest snapshot of the table
+  - `incremental`: Read incremental changes between beginTime and endTime
+  - `read_optimized`: Read optimized query for read-heavy workloads
+  - `cdc`: Change Data Capture query to read change records
+- `beginTime`: Start time for incremental queries (required for incremental query type)
+- `endTime`: End time for incremental queries (required for incremental query type)
+- `options`: Additional Hudi options as key-value pairs

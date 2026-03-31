@@ -79,9 +79,16 @@ class HudiSource extends DataSource {
       "spark.sql.hudi.table.name" -> table
     ) ++ options
 
-    val finallyOptions = this.getMapValueThrow[String](cfg, TABLE_KEY) match {
+    val queryType = cfg.get(QUERY_TYPE_KEY) match {
+      case Some(qt) => qt.asInstanceOf[String]
+      case None => "snapshot" // default to snapshot query
+    }
+
+    val finallyOptions = queryType match {
       case "snapshot" =>
-        commonOptions
+        commonOptions ++ Map(
+          QUERY_TYPE.key -> QUERY_TYPE_SNAPSHOT_OPT_VAL
+        )
       case "incremental" =>
         val beginTime = this.getMapValueThrow[String](cfg, BEGIN_TIME_KEY)
         val endTime = this.getMapValueThrow[String](cfg, END_TIME_KEY)
@@ -89,14 +96,16 @@ class HudiSource extends DataSource {
         commonOptions ++ Map(
           QUERY_TYPE.key -> QUERY_TYPE_INCREMENTAL_OPT_VAL,
           BEGIN_INSTANTTIME.key -> beginTime,
-          END_INSTANTTIME.key() -> endTime)
+          END_INSTANTTIME.key -> endTime)
       case "read_optimized" =>
-        //        Map(QUERY_TYPE.key() -> QUERY_TYPE_READ_OPTIMIZED_OPT_VAL)
-        // todo
-        throw new PuddingException("unrealized!")
+        commonOptions ++ Map(
+          QUERY_TYPE.key -> QUERY_TYPE_READ_OPTIMIZED_OPT_VAL
+        )
       case "cdc" =>
-        // todo
-        throw new PuddingException("unrealized!")
+        commonOptions ++ Map(
+          QUERY_TYPE.key -> QUERY_TYPE_INCREMENTAL_OPT_VAL,
+          "hoodie.datasource.query.incremental.format" -> "cdc"
+        )
       case _ =>
         throw new PuddingException("Query type not supported!")
     }

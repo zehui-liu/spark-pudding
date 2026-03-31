@@ -20,7 +20,7 @@ package org.pudding.core.configure
 import scala.collection.immutable._
 
 /**
- * job pipeline confugure
+ * job pipeline configure
  */
 case class JobPipelineConf(
   sources: Seq[SourceConf],

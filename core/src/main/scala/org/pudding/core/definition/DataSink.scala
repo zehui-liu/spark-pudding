@@ -44,7 +44,7 @@ trait DataSink extends EasyHandle with Logging {
    * Writer dataframe
    *
    * @param dataFrame DataFrame
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
+   * @param config    Option[Map[String, Any] Parameter configuration requires self parameter verification
    */
   def writer(dataFrame: DataFrame, config: Option[Map[String, Any]]): Unit
 }
@@ -53,7 +53,8 @@ object DataSink {
 
   /**
    * factory method
-   * @param sinkDefs Seq[SinkDef]
+   *
+   * @param sinkCfs Seq[SinkDef]
    * @return map[id, (DataSink, config map)]
    */
   def apply(sinkCfs: Seq[SinkConf]): Map[String, (DataSink, Option[Map[String, Any]])] = {
@@ -65,5 +66,10 @@ object DataSink {
       case Some(dataSink) => dataSink
       case _ => throw new PuddingException(s"${s.`type`} can not get DataSink implement!")
     }) -> s.config)).toMap
+
+    sinkCfs.map(s => (s.id, identifierAndServices.getOrElse(s.`type`,
+        throw new PuddingException(s"${s.`type`} can not get DataSink implement!"))
+        -> s.config))
+      .toMap
   }
 }

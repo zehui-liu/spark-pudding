@@ -18,7 +18,7 @@
 package org.pudding.core.configure
 
 /**
- * transform confugure
+ * transform configure
  */
 case class TransformConf(
   `type`: String,

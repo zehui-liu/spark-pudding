@@ -68,7 +68,7 @@ class MockDataSink extends DataSink {
     config match {
       case Some(cfg) =>
         if (cfg.getOrElse(PRINT_SCHEMA_KEY, false).asInstanceOf[Boolean]) {
-          dataFrame.printSchema(cfg.getOrElse(LEVEL_KEY, Int.MaxValue).asInstanceOf[Int])
+          dataFrame.printSchema()
         }
 
         dataFrame.show(

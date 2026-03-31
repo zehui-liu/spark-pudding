@@ -26,7 +26,7 @@ import org.pudding.core.configure._
 import org.pudding.core.parser._
 
 /**
- * job confugure parser interfaces
+ * job configure parser interfaces
  */
 trait JobConfigureParser extends EasyHandle {
 

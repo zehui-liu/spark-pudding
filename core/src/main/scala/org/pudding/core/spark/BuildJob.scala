@@ -17,15 +17,11 @@
 
 package org.pudding.core.spark
 
-import scala.collection.immutable._
 import scala.collection.mutable
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
-
 import org.pudding.core.PuddingException
 import org.pudding.core.configure.JobPipelineConf
 import org.pudding.core.definition.{DataSink, DataSource, DataTransform}
@@ -93,16 +89,11 @@ object BuildJob extends Logging {
           // Dependencies is an upstream id
           val transformIdDf = transformConf.dependencies
             .map(id =>
-              id -> (idDf.get(id) match {
-                case Some(df) => df
-                case None => throw new PuddingException("transforms can not get dataframe from dependencies!")
-              }))
-            .toMap
+              id -> idDf.getOrElse(id, throw new PuddingException("transforms can not get dataframe from dependencies!"))
+            ).toMap
 
-          val (transform, config) = transforms.get(transformConf.id) match {
-            case Some(tc) => tc
-            case None => throw new PuddingException("can not get transform from transforms!")
-          }
+          val (transform, config) =
+            transforms.getOrElse(transformConf.id, throw new PuddingException("can not get transform from transforms!"))
 
           idDf ++= Map(transformConf.id -> transform.handle(transformIdDf, config))
         }
@@ -125,15 +116,12 @@ object BuildJob extends Logging {
       throw new PuddingException("dataSinks can not be null!")
     } else {
       for (sinkConf <- sinkCfs) {
-        val df = idDf.get(sinkConf.dependency) match {
-          case Some(df) => df
-          case None => throw new PuddingException("sinkConf can not get dataframe from idDf")
-        }
+        val df =
+          idDf.getOrElse(sinkConf.dependency, throw new PuddingException("sinkConf can not get dataframe from idDf"))
 
-        val (dataSink, config) = dataSinks.get(sinkConf.id) match {
-          case Some(dataSink) => dataSink
-          case None => throw new PuddingException("can not get dataSink from dataSinks")
-        }
+        val (dataSink, config) =
+          dataSinks.getOrElse(sinkConf.id, throw new PuddingException("can not get dataSink from dataSinks"))
+
         dataSink.writer(df, config)
       }
     }

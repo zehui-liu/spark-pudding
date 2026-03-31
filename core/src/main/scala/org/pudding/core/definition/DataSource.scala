@@ -44,7 +44,7 @@ trait DataSource extends EasyHandle with Logging with Serializable {
    * Initial data source, use this. have a surprised
    *
    * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
+   * @param config       Option[Map[String, Any] Parameter configuration requires self parameter verification
    * @return DataFrame
    */
   def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame
@@ -54,7 +54,8 @@ object DataSource {
 
   /**
    * factory method
-   * @param sourceDefs Seq[SourceDef]
+   *
+   * @param sourceCfs Seq[SourceDef]
    * @return map[id, (DataSource, config map)]
    */
   def apply(sourceCfs: Seq[SourceConf]): Map[String, (DataSource, Option[Map[String, Any]])] = {
@@ -62,9 +63,8 @@ object DataSource {
     val serviceLoader = ServiceLoader.load(classOf[DataSource])
     val identifierAndServices = serviceLoader.iterator().asScala.toList.map(s => s.identifier -> s).toMap
 
-    sourceCfs.map(s => (s.id, (identifierAndServices.get(s.`type`) match {
-      case Some(dataSource) => dataSource
-      case _ => throw new PuddingException(s"${s.`type`} can not get DataSource implement!")
-    }) -> s.config)).toMap
+    sourceCfs.map(s => (s.id, identifierAndServices.getOrElse(s.`type`,
+      throw new PuddingException(s"${s.`type`} can not get DataSource implement!")) -> s.config))
+      .toMap
   }
 }
