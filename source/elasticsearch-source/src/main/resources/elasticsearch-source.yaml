@@ -1,0 +1,16 @@
+source:
+  - type: "elasticsearch-source"
+    describe: "read data from elasticsearch 8"
+    id: "es-source-1"
+    config:
+      esNodes: "http://elasticsearch-host:9200"
+      esIndex: "my_index"
+      esUser: "elastic"
+      esPass: "your_password"
+      esPort: "9200"
+      fields: "col1,col2,col3" # Select specific fields, comma-separated or as a list
+      scrollSize: 1000 # The size of each scroll batch
+      limit: 10000 # Total number of rows to read
+      options:
+        es.nodes.wan.only: "true"
+        es.read.field.as.array.include: "tags"
