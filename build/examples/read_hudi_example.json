@@ -1,0 +1,96 @@
+{
+  "job": {
+    "sparkHome": "${SPARK_HOME}",
+    "sparkPuddingHome": "${PUDDING_HOME}",
+    "appName": "spark hudi example job",
+    "master": "local[*]",
+    "deployMode": "client",
+    "describe": "spark hudi test job",
+    "enableHiveSupport": "true",
+    "config": {
+      "spark.executor.memory": "1g",
+      "spark.executor.cores": "2",
+      "spark.driver.memory": "1g",
+      "spark.driver.cores": "1",
+      "spark.executor.instances": "2"
+    }
+  },
+  "source": [
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with incremental query",
+      "id": "source-1",
+      "config": {
+        "table": "default.test_table",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table",
+        "queryType": "incremental",
+        "beginTime": "20230101000000",
+        "endTime": "20230102000000",
+        "options": {
+          "hoodie.datasource.read.use.newer.timeline": "true"
+        }
+      }
+    },
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with cdc query",
+      "id": "source-2",
+      "config": {
+        "table": "default.test_table_cdc",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table_cdc",
+        "queryType": "cdc"
+      }
+    },
+    {
+      "type": "hudi-source",
+      "describe": "read hudi table with read_optimized query",
+      "id": "source-3",
+      "config": {
+        "table": "default.test_table_ro",
+        "tablePath": "hdfs://namenode:port/path/to/hudi/table_ro",
+        "queryType": "read_optimized"
+      }
+    }
+  ],
+  "sink": [
+    {
+      "type": "console-sink",
+      "describe": "show incremental data on console",
+      "id": "sink1",
+      "config": {
+        "isStreaming": false,
+        "numRows": 20,
+        "truncate": 50,
+        "vertical": false,
+        "printSchema": true
+      },
+      "dependency": "source-1"
+    },
+    {
+      "type": "console-sink",
+      "describe": "show cdc data on console",
+      "id": "sink2",
+      "config": {
+        "isStreaming": false,
+        "numRows": 20,
+        "truncate": 50,
+        "vertical": false,
+        "printSchema": true
+      },
+      "dependency": "source-2"
+    },
+    {
+      "type": "console-sink",
+      "describe": "show read_optimized data on console",
+      "id": "sink3",
+      "config": {
+        "isStreaming": false,
+        "numRows": 20,
+        "truncate": 50,
+        "vertical": false,
+        "printSchema": true
+      },
+      "dependency": "source-3"
+    }
+  ]
+}

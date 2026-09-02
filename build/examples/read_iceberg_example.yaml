@@ -1,0 +1,43 @@
+job:
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark iceberg example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "spark iceberg test job"
+  enableHiveSupport: "true"
+  config:
+    spark.executor.memory: "1g"
+    spark.executor.cores: "2"
+    spark.driver.memory: "1g"
+    spark.driver.cores: "1"
+    spark.executor.instances: "2"
+
+source:
+  - type: "iceberg-source"
+    describe: "read iceberg table"
+    id: "source-1"
+    config:
+      table: "default.test_table"
+      catalog: "spark_catalog"
+      filterExpr: "date_col >= '2023-01-01'"
+      options:
+        basePath: "hdfs://namenode:port/path/to/warehouse"
+      forceConvertSchema: true
+      schema:
+        id: "long"
+        name: "string"
+        date_col: "date"
+        value: "double"
+
+sink:
+  - type: "console-sink"
+    describe: "show data on console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"
