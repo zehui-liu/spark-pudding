@@ -2,10 +2,10 @@
 
 English | [简体中文](RELEASE_NOTES.md)
 
-## v1.0.0 (Unreleased) — 2026-11-05
+## v1.0.0 — 2026-11-12
 
-> Status: development snapshot in the current working tree. No release tag or release commit
-> has been created yet.  
+> Status: committed on branch `v-1.0` (commit `b08f4fa`). No release tag or push has been
+> created yet.
 > Branch: `v-1.0`
 
 v1.0.0 expands the project from a single-purpose batch framework into a data integration
