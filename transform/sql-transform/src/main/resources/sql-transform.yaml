@@ -1,9 +1,16 @@
 transform:
   - type: sql-transform
-    describe: handle dataframe use sql
-    id: source1
+    describe: run SQL over one or more dependency DataFrames
+    id: transform1
     config:
-      tempView: tbl_temp
-      sql: 'select a, b, c from tbl_temp'
+      # Single dependency, keep using tempView:
+      # tempView: tbl_temp
+      #
+      # Multiple dependencies, map every dependency id to a temp view name:
+      tempViews:
+        source1: tbl_temp
+        source2: user_temp
+      sql: 'select t.a, t.b, u.c from tbl_temp t join user_temp u on t.id = u.id'
+      # Optional number of partitions for the SQL result.
       numPartitions: 300
-    dependencies: [source1]
+    dependencies: [source1, source2]

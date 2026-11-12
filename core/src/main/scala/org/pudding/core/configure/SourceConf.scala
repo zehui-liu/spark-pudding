@@ -24,5 +24,6 @@ case class SourceConf(
   `type`: String,
   describe: Option[String],
   id: String,
-  config: Option[Map[String, Any]]
-)
+  config: Option[Map[String, Any]],
+  connection: Option[String] = None,
+  catalog: Option[String] = None)

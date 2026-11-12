@@ -1,1 +1,5 @@
 org.pudding.core.spark.mock.MockDataSink
+org.pudding.core.spark.mock.MockSharedConfigSink
+org.pudding.core.spark.mock.MockIncrementalSink
+org.pudding.core.spark.mock.MockNonAtomicSink
+org.pudding.core.spark.mock.MockCheckpointlessSink

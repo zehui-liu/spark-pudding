@@ -1,25 +1,11 @@
 source:
   - type: hive-source
-    describe: read hive table
+    describe: read a Hive table
     id: source-1
     config:
       table: test1
       conditionExpr: age > 21 and name = 'tom'
-      options:
-        basePath: "hdfs://path/to/hive/warehouse"
-        partitionColumn: "partition_key"
-        lowerBound: "2020-01-01"
-        upperBound: "2020-12-31"
-        numPartitions: "10"
-        fetchSize: "1000"
-        mergeSchema: "true"
-        timestampFormat: "yyyy-MM-dd HH:mm:ss"
-        dateFormat: "yyyy-MM-dd"
-        nullValue: "NULL"
-        mode: "FAILFAST"
-        timeZone: "UTC"
-        locale: "en-US"
-      # dataframe force convert schema field and type，other field discard
+      # Optional projection and type conversion.
       forceConvertSchema: true
       schema:
         a1: string

@@ -24,9 +24,6 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.immutable._
 
-/**
- *
- */
 class JobConfigureParserTest extends AnyFunSuite with Matchers with EasyHandle with PrivateMethodTester {
 
   private val mockSourceMaps = Seq(

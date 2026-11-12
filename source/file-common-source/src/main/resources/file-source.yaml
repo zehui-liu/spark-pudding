@@ -1,14 +1,16 @@
 source:
-  - type: file-source
-    describe: file common source,local file or hdfs file
+  - type: file-common-source
+    describe: read CSV, text, JSON, Parquet or ORC files from a Hadoop-compatible filesystem
     id: source-1
     config:
+      # batch reads accept multiple comma-separated paths; streaming reads exactly one
       path: hdfs:///user/hive/test001.csv,hdfs:///user/hive/test002.csv
-      filedType: csv
-      streamRead: true
+      fileType: csv
+      # csv and json streams require schema; parquet, orc and text streams do not
+      streamRead: false
       textDelimiter: ','
-      # dataframe force convert schema field and type，other field discard
-      forceConvertSchema: true
+      # Project and cast to the configured schema; unlisted columns are dropped.
+      forceConvertSchema: false
       options:
         header: true
         delimiter: ','

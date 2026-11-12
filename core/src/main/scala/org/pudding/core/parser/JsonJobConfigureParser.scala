@@ -21,7 +21,7 @@ import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.{JsonMethods, Serialization}
 
 import org.pudding.core.configure.JobPipelineConf
-import org.pudding.core.JobConfigureParser
+import org.pudding.core.{JobConfigureParser, PuddingException}
 
 /**
  * json configure parser
@@ -31,7 +31,13 @@ class JsonJobConfigureParser extends JobConfigureParser {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
-    val configMap = JsonMethods.parse(pipelineCfgStr).extract[Map[String, Any]]
+    val configMap = try {
+      JsonMethods.parse(pipelineCfgStr).extract[Map[String, Any]]
+    } catch {
+      case error: Exception =>
+        throw new PuddingException(
+          s"parser json file error: ${error.getClass.getSimpleName}", error)
+    }
     checkMapValueNull(configMap)
     defaultParse(configMap)
   }

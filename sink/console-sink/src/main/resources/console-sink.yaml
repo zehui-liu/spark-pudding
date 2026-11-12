@@ -1,9 +1,11 @@
 sink:
   - type: console-sink
-    describe: show data on console
+    describe: display a DataFrame on the console
     id: sink1
     config:
-      isStream: false
+      # Streaming console output; the query runs until stopped or it fails.
+      # legacy alias: isStream
+      isStreaming: false
       numRows: 10
       truncate: 20
       vertical: false

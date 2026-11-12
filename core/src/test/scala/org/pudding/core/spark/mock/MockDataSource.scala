@@ -18,28 +18,19 @@
 package org.pudding.core.spark.mock
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.pudding.core.configure.ExecutionMode
 import org.pudding.core.definition.DataSource
 
 case class Person(name: String, age: Int)
-/**
- *
- */
+
 class MockDataSource extends DataSource {
 
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the yaml configuration
-   *
-   * @return String
-   */
   override def identifier: String = "mock_source"
 
-  /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
+  // Capability-only test source: the validator tests use this for streaming selection.
+  override def supportedExecutionModes: Set[ExecutionMode] =
+    Set(ExecutionMode.Batch, ExecutionMode.Streaming)
+
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
     import sparkSession.implicits._
 

@@ -1,0 +1,50 @@
+job:
+  mode: batch
+  # Overridden by --spark-home or by SPARK_HOME in the submitting environment.
+  sparkHome: '/opt/spark'
+  # Overridden with the unpacked spark-pudding distribution root by pudding k8s submit.
+  sparkPuddingHome: '/opt/spark-pudding'
+  appName: 'pudding-k8s-example'
+  # Overridden by --master because the API server address depends on the cluster.
+  master: 'k8s://https://kubernetes.example:6443'
+  deployMode: 'cluster'
+  describe: 'spark-pudding kubernetes smoke test'
+  config:
+    spark.ui.enabled: 'false'
+    spark.driver.memory: '512m'
+    spark.executor.memory: '512m'
+    spark.executor.instances: '1'
+    spark.kubernetes.driver.request.cores: '100m'
+    spark.kubernetes.executor.request.cores: '100m'
+    spark.kubernetes.container.image.pullPolicy: 'IfNotPresent'
+
+source:
+  - type: file-common-source
+    describe: CSV file baked into the image
+    id: source-1
+    config:
+      path: '/opt/spark-pudding/examples/data/demo.csv'
+      fileType: csv
+      streamRead: false
+      textDelimiter: ','
+      forceConvertSchema: true
+      options:
+        header: 'true'
+        delimiter: ','
+      schema:
+        col1: string
+        col2: string
+        col3: string
+        col4: string
+
+sink:
+  - type: console-sink
+    describe: show data on console
+    id: sink-1
+    config:
+      isStreaming: false
+      numRows: 10
+      truncate: 20
+      vertical: false
+      printSchema: true
+    dependency: source-1

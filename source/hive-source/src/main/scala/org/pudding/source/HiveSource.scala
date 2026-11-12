@@ -19,10 +19,10 @@ package org.pudding.source
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.pudding.core.PuddingException
-import org.pudding.core.definition.DataSource
+import org.pudding.core.definition.{DataSource, SourceContext}
 
 /**
- *
+ * Reads a Hive table through Spark SQL, with an optional post-read filter and schema projection.
  */
 class HiveSource extends DataSource {
 
@@ -30,60 +30,46 @@ class HiveSource extends DataSource {
 
   private val CONDITION_EXPR_KEY = "conditionExpr"
 
-  private val OPTIONS_KEY = "options"
-
   private val FORCE_CONVERT_SCHEMA_KEY = "forceConvertSchema"
 
   private val SCHEMA_KEY = "schema"
 
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the yaml configuration
-   *
-   * @return String
-   */
   override def identifier: String = "hive-source"
 
-  /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
+  override def supportedCatalogTypes: Set[String] = Set("hive")
+
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
-    // config parameter must exist
-    val cfg = config match {
+    this.initData(sparkSession, SourceContext(config))
+  }
+
+  override def initData(sparkSession: SparkSession, context: SourceContext): DataFrame = {
+    context.catalog.foreach { catalog =>
+      if (catalog.`type` != "hive") {
+        throw new PuddingException(
+          s"hive-source requires a hive catalog, but got: ${catalog.`type`}")
+      }
+    }
+
+    val cfg = context.config match {
       case Some(cfg) => cfg
       case None => throw new PuddingException("config can not be null!")
     }
 
-    // table parameter must exist
-    val table = this.getMapValueThrow[String](cfg, TABLE_KEY)
-
-    // options parameter is optional
-    val options = cfg.get(OPTIONS_KEY) match {
-      case Some(options) => options.asInstanceOf[Map[String, String]]
-      case None => Map.empty[String, String]
+    val table = this.optionalString(cfg, TABLE_KEY).getOrElse {
+      throw new PuddingException(s"can not find param: $TABLE_KEY, $TABLE_KEY must be exist!")
     }
 
-    val forceConvertSchema = cfg.get(FORCE_CONVERT_SCHEMA_KEY) match {
-      case Some(fcs) => fcs.asInstanceOf[String].toBoolean
-      case None => false
-    }
-
-    // sql filter, if conditionExpr exist
-    val originalDataFrame = sparkSession.read.options(options).table(table)
-    val processDataFrame = cfg.get(CONDITION_EXPR_KEY) match {
-      case Some(conditionExpr) => originalDataFrame.where(conditionExpr.asInstanceOf[String])
+    val originalDataFrame = sparkSession.read.table(table)
+    val processDataFrame = this.optionalString(cfg, CONDITION_EXPR_KEY) match {
+      case Some(conditionExpr) => originalDataFrame.where(conditionExpr)
       case None => originalDataFrame
     }
 
-    if (forceConvertSchema) {
-      val schemas = cfg.get(SCHEMA_KEY) match {
-        case Some(schemas) => schemas.asInstanceOf[Map[String, String]]
-        case None =>
-          throw new PuddingException(
-            "forceConvertSchema set true, schema parameter must be have value, please check configure!")
+    if (this.booleanValue(cfg, FORCE_CONVERT_SCHEMA_KEY)) {
+      val schemas = this.getStringOptions(cfg, SCHEMA_KEY)
+      if (schemas.isEmpty) {
+        throw new PuddingException(
+          s"$FORCE_CONVERT_SCHEMA_KEY set true, $SCHEMA_KEY parameter must have a value")
       }
       val schemasSize = schemas.size
       val dataFrameLength = processDataFrame.schema.length
@@ -95,6 +81,31 @@ class HiveSource extends DataSource {
       processDataFrame.select(this.getColumns(schemas).toArray: _*)
     } else {
       processDataFrame
+    }
+  }
+
+  private def optionalString(cfg: Map[String, Any], key: String): Option[String] = {
+    cfg.get(key).filter(_ != null) match {
+      case Some(value: String) if value.trim.nonEmpty => Some(value.trim)
+      case Some(_: String) => throw new PuddingException(s"$key can not be empty!")
+      case Some(_) => throw new PuddingException(s"$key must be a string!")
+      case None => None
+    }
+  }
+
+  private def booleanValue(cfg: Map[String, Any], key: String): Boolean = {
+    cfg.get(key).filter(_ != null) match {
+      case Some(value: Boolean) => value
+      case Some(value: String) =>
+        value.trim.toLowerCase(java.util.Locale.ROOT) match {
+          case "true" => true
+          case "false" => false
+          case _ =>
+            throw new PuddingException(s"$key must be true or false, but got: $value")
+        }
+      case Some(value) =>
+        throw new PuddingException(s"$key must be boolean, but got: $value")
+      case None => false
     }
   }
 }

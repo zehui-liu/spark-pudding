@@ -1,0 +1,12 @@
+sink:
+  - type: hive-sink
+    describe: write a DataFrame to a Hive table
+    id: sink1
+    config:
+      table: default.test
+      # append, overwrite, ignore or error, default is append
+      mode: append
+      # optional, supports list or comma-separated string
+      partitionBy:
+        - dt
+    dependency: transform2

@@ -23,63 +23,84 @@
 
     <groupId>org.pudding</groupId>
     <artifactId>spark-pudding-parent</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>client</module>
         <module>core</module>
+        <module>connector</module>
+        <module>provider</module>
+        <module>runtime</module>
         <module>source</module>
         <module>transform</module>
         <module>sink</module>
+        <module>maintenance</module>
         <module>build</module>
+        <module>integration</module>
     </modules>
 
     <profiles>
+        <!-- JDK 17 requires module access for Spark and Hudi/Hadoop reflection. The test
+             process is forked by the ScalaTest plugin, so the opens are supplied through its
+             argLine. -->
         <profile>
-            <id>jdk-8</id>
+            <id>jdk-17</id>
             <activation>
-                <jdk>1.8</jdk>
+                <jdk>[17,)</jdk>
             </activation>
             <properties>
-                <maven.compiler.source>1.8</maven.compiler.source>
-                <maven.compiler.target>1.8</maven.compiler.target>
-            </properties>
-        </profile>
-        <profile>
-            <id>jdk-11</id>
-            <activation>
-                <jdk>11</jdk>
-            </activation>
-            <properties>
-                <maven.compiler.source>11</maven.compiler.source>
-                <maven.compiler.target>11</maven.compiler.target>
+                <test.argLine>--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED</test.argLine>
             </properties>
         </profile>
     </profiles>
 
     <properties>
-        <scala.version>2.12.15</scala.version>
+        <scala.version>2.12.18</scala.version>
         <scala.binary.version>2.12</scala.binary.version>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <!-- JDK 8 is no longer supported. Compile against the Java 11 API so JDK 11 and 17
+             share one binary output while accidentally using a newer JDK API is rejected. -->
+        <java.version>11</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <test.argLine></test.argLine>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
 
         <spark.version>3.4.0</spark.version>
+        <hadoop.version>3.3.4</hadoop.version>
+        <aws.sdk.version>1.12.262</aws.sdk.version>
+        <gcs.connector.version>hadoop3-2.2.23</gcs.connector.version>
+        <hadoop.cos.version>2.6.5-8.0.2</hadoop.cos.version>
+        <elasticsearch.version>8.9.1</elasticsearch.version>
+        <mongodb.spark.version>10.5.0</mongodb.spark.version>
+        <confluent.version>7.4.0</confluent.version>
+        <iceberg.version>1.5.0</iceberg.version>
+        <iceberg.spark.binary.version>3.4</iceberg.spark.binary.version>
+        <hudi.version>0.14.0</hudi.version>
+        <hudi.spark.binary.version>3.4</hudi.spark.binary.version>
+        <paimon.version>1.3.2</paimon.version>
+        <paimon.spark.binary.version>3.4</paimon.spark.binary.version>
+        <debezium.version>1.9.8.Final</debezium.version>
+        <debezium.connect.version>3.2.0</debezium.connect.version>
+        <mongodb.driver.version>5.1.4</mongodb.driver.version>
         <scalatest.version>3.2.16</scalatest.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
+        <!--
+          Iceberg's Spark runtime uses scala.jdk.CollectionConverters while being published for
+          Scala 2.12; scala-collection-compat supplies that shim on Spark 3.4.
+        -->
+        <scala.collection.compat.version>2.12.0</scala.collection.compat.version>
         <circe.version>0.14.2</circe.version>
         <typesafe.version>1.4.2</typesafe.version>
         <scallop.version>4.1.0</scallop.version>
         <json4s.version>3.7.0-M11</json4s.version>
 
         <picocli.version>4.7.5</picocli.version>
-        <commons.version>2.13.0</commons.version>
-        <json4s.version>3.7.0-M11</json4s.version>
+        <fabric8.version>5.10.2</fabric8.version>
+        <jedis.version>3.10.0</jedis.version>
 
         <scalastyle.maven.plugin.version>1.0.0</scalastyle.maven.plugin.version>
+        <scalatest.maven.plugin.version>2.2.0</scalatest.maven.plugin.version>
 
     </properties>
 
@@ -88,6 +109,20 @@
             <dependency>
                 <groupId>org.pudding</groupId>
                 <artifactId>core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pudding</groupId>
+                <artifactId>core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pudding</groupId>
+                <artifactId>jdbc-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -123,6 +158,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-collection-compat_${scala.binary.version}</artifactId>
+                <version>${scala.collection.compat.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.circe</groupId>
                 <artifactId>circe-yaml_${scala.binary.version}</artifactId>
                 <version>${circe.version}</version>
@@ -141,15 +182,15 @@
             </dependency>
 
             <dependency>
-                <groupId>org.rogach</groupId>
-                <artifactId>scallop_${scala.binary.version}</artifactId>
-                <version>${scallop.version}</version>
+                <groupId>org.apache.paimon</groupId>
+                <artifactId>paimon-spark-${paimon.spark.binary.version}</artifactId>
+                <version>${paimon.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons.version}</version>
+                <groupId>org.rogach</groupId>
+                <artifactId>scallop_${scala.binary.version}</artifactId>
+                <version>${scallop.version}</version>
             </dependency>
 
             <dependency>
@@ -165,16 +206,53 @@
             </dependency>
 
             <dependency>
-                <groupId>org.json4s</groupId>
-                <artifactId>json4s-core_2.12</artifactId>
-                <version>${json4s.version}</version>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
             </dependency>
 
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
+            <!-- Fail on the unsupported JDK 8 toolchain early, with an actionable message. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-jdk</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[11,18)</version>
+                                    <message>Spark Pudding supports JDK 11 and JDK 17; JDK 8 and JDK 18+ are not supported.</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
@@ -199,10 +277,46 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>${scalatest.maven.plugin.version}</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>TestSuite.txt</filereports>
+                    <argLine>${test.argLine}</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scala-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.6.0</version>
+                    <configuration>
+                        <configLocation>${maven.multiModuleProjectDirectory}/build/checkstyle.xml</configLocation>
+                        <propertyExpansion>checkstyle.suppressions.file=${maven.multiModuleProjectDirectory}/build/checkstyle/checkstyle-suppressions.xml</propertyExpansion>
+                        <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                        <includeResources>false</includeResources>
+                        <includeTestResources>false</includeTestResources>
+                        <excludeGeneratedSources>true</excludeGeneratedSources>
+                        <consoleOutput>true</consoleOutput>
+                        <failOnViolation>true</failOnViolation>
+                        <failsOnError>true</failsOnError>
+                        <outputFile>${project.build.directory}/checkstyle-result.xml</outputFile>
+                    </configuration>
+                </plugin>
                 <plugin>
                     <groupId>org.scala-tools</groupId>
                     <artifactId>maven-scala-plugin</artifactId>
@@ -232,8 +346,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
+                        <release>${maven.compiler.release}</release>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                     <executions>

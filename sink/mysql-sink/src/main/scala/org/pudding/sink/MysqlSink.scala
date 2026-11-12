@@ -20,85 +20,100 @@ package org.pudding.sink
 import org.apache.spark.sql.DataFrame
 
 import org.pudding.core.PuddingException
-import org.pudding.core.definition.DataSink
+import org.pudding.core.configure.{ExecutionMode, StreamingOutputMode}
+import org.pudding.core.definition.{
+  DataSink,
+  IncrementalSemantics,
+  IncrementalWrite,
+  SinkContext
+}
+import org.pudding.connector.jdbc.{JdbcAtomicReplace, JdbcConnectorConfig, JdbcStreaming}
+import org.pudding.connector.jdbc.JdbcConnectorConfig.DriverKey
 
 /**
+ * Writes a DataFrame to MySQL through Spark's JDBC data sink.
  *
+ * Streaming `append` writes each microbatch through Spark JDBC. Streaming `update` merges full
+ * rows by `recordKeyFields` with a keyed `UPDATE ... JOIN` and `INSERT ... WHERE NOT EXISTS`.
  */
-class MysqlSink extends DataSink{
+class MysqlSink extends DataSink {
 
-  private val DEFAULT_DRIVER = "com.mysql.cj.jdbc.Driver"
-
-  private val STREAM_WRITE_KEY = "streamWrite"
-
-  private val URL_KEY = "url"
-
-  private val TABLE_KEY = "table"
-
-  private val USER_KEY = "user"
-
-  private val PASS_WORD_KEY = "password"
-
-  private val MODE_KEY = "mode"
-
-  private val OPTIONS_KEY = "options"
-
-  /**
-   * Data sink identifier，Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "mysql-sink"
 
-  /**
-   * Writer dataframe
-   *
-   * @param dataFrame DataFrame
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   */
+  override def supportedExecutionModes: Set[ExecutionMode] =
+    Set(ExecutionMode.Batch, ExecutionMode.Streaming)
+
+  override def supportedStreamingOutputModes: Set[String] =
+    Set(StreamingOutputMode.Append, StreamingOutputMode.Update)
+
+  override def supportsStreamingUpsert: Boolean = true
+
+  override def supportsFullRefresh: Boolean = true
+
+  override def supportsAtomicReplace: Boolean = true
+
+  override def supportsIncrementalSync: Boolean = true
+
+  override def supportedIncrementalSemantics: Set[IncrementalSemantics] =
+    Set(IncrementalSemantics.Append, IncrementalSemantics.Upsert, IncrementalSemantics.Cdc)
+
+  override def isIdempotentIncremental(semantics: IncrementalSemantics): Boolean =
+    semantics != IncrementalSemantics.Append
+
+  override def supportedConnectionTypes: Set[String] = Set("jdbc", "mysql")
+
   override def writer(dataFrame: DataFrame, config: Option[Map[String, Any]]): Unit = {
-    // config parameter must exist
-    val cfg = config match {
-      case Some(cfg) => cfg
-      case None => throw new PuddingException("config can not be null!")
+    this.writer(dataFrame, SinkContext(config))
+  }
+
+  override def writer(dataFrame: DataFrame, context: SinkContext): Unit = {
+    val cfg = context.config.getOrElse(throw new PuddingException("config can not be null!"))
+    val options = MysqlSink.writerOptions(context)
+    if (JdbcStreaming.streamingEnabled(cfg, context.executionMode)) {
+      JdbcStreaming.write(dataFrame, context, options, this.identifier)
+    } else {
+      dataFrame.write.format("jdbc")
+        .options(options)
+        .mode(JdbcConnectorConfig.saveMode(cfg))
+        .save()
     }
+  }
 
-    // url parameter must exist
-    val url = this.getMapValueThrow[String](cfg, URL_KEY)
+  override def writeFullRefresh(dataFrame: DataFrame, context: SinkContext): Unit = {
+    JdbcAtomicReplace.write(dataFrame, MysqlSink.writerOptions(context))
+  }
 
-    // table parameter must exist
-    val table = this.getMapValueThrow[String](cfg, TABLE_KEY)
+  override def writeIncremental(
+      dataFrame: DataFrame,
+      context: SinkContext,
+      incremental: IncrementalWrite): Unit = {
+    val cfg = context.config.getOrElse(
+      throw new PuddingException("config can not be null!"))
+    JdbcStreaming.writeIncremental(
+      dataFrame, cfg, MysqlSink.writerOptions(context), incremental)
+  }
+}
 
-    val user = this.getMapValueThrow[String](cfg, USER_KEY)
-    val password = this.getMapValueThrow[String](cfg, PASS_WORD_KEY)
+private[sink] object MysqlSink {
 
-    val mode = cfg.get(MODE_KEY) match {
-      case Some(mode) => mode.asInstanceOf[String]
-      case None => "overwrite"
-    }
+  private val DefaultDriver = "com.mysql.cj.jdbc.Driver"
 
-    // options parameter is optional
-    val options = cfg.get(OPTIONS_KEY) match {
-      case Some(options) => options.asInstanceOf[Map[String, String]]
+  def writerOptions(context: SinkContext): Map[String, String] = {
+    val cfg = context.config.getOrElse(throw new PuddingException("config can not be null!"))
+    val nativeOptions = context.connection match {
+      case Some(connection) =>
+        if (connection.`type` != "jdbc" && connection.`type` != "mysql") {
+          throw new PuddingException(
+            s"mysql-sink requires a jdbc or mysql connection, but got: ${connection.`type`}")
+        }
+        connection.options
       case None => Map.empty[String, String]
     }
-
-    val streamWrite = cfg.getOrElse(STREAM_WRITE_KEY, false).asInstanceOf[Boolean]
-
-    // more configure see apache spark code org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-    val optionsMap = Map(
-      URL_KEY -> url,
-      TABLE_KEY -> table,
-      USER_KEY -> user,
-      PASS_WORD_KEY -> password,
-      "driver" -> DEFAULT_DRIVER
-    ) ++ options
-
-    if (streamWrite) {
-      val query = dataFrame.writeStream.format("jdbc").options(optionsMap).start()
-      query.awaitTermination()
+    val effectiveConfig = if (!nativeOptions.contains(DriverKey) && !cfg.contains(DriverKey)) {
+      cfg + (DriverKey -> DefaultDriver)
     } else {
-      dataFrame.write.format("jdbc").options(optionsMap).mode(mode).save()
+      cfg
     }
+    JdbcConnectorConfig.connectionOptions(effectiveConfig, nativeOptions)
   }
 }

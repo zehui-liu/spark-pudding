@@ -1,0 +1,32 @@
+job:
+  mode: batch
+  appName: read-kafka-avro
+  master: local[*]
+  deployMode: client
+
+source:
+  - type: kafka-source
+    id: orders_avro
+    config:
+      kafkaBootstrapServers: broker-1:9092,broker-2:9092
+      subscribe: orders
+      valueFormat: avro
+      valueSchema:
+        id: long
+        name: string
+        amount: decimal(12,2)
+      schemaRegistry:
+        url: http://schema-registry.internal:8081
+        username: ${secret:env/SCHEMA_REGISTRY_USER}
+        password: ${secret:env/SCHEMA_REGISTRY_PASSWORD}
+        subject: orders-value
+      options:
+        startingOffsets: earliest
+        endingOffsets: latest
+
+sink:
+  - type: console-sink
+    id: print_orders
+    dependency: orders_avro
+    config:
+      numRows: 20

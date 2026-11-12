@@ -18,7 +18,11 @@
 package org.pudding.core.configure
 
 /**
- * job configure
+ * Job configuration.
+ *
+ * @param mode     required processing mode: batch, sync or streaming
+ * @param strategy sync strategy (`full` or `incremental`); required only for sync
+ * @param trigger  optional structured-streaming trigger; only valid for streaming
  */
 case class JobConf(
   sparkHome: String,
@@ -27,6 +31,7 @@ case class JobConf(
   master: String,
   deployMode: String,
   describe: Option[String],
-  enableHiveSupport: Option[String],
-  config: Option[Map[String, String]]
-)
+  config: Option[Map[String, String]],
+  mode: JobMode,
+  strategy: Option[SyncStrategy] = None,
+  trigger: Option[String] = None)

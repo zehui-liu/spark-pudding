@@ -1,0 +1,44 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark read mongodb example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "read a MongoDB collection through a named connection"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: mongo-prod
+    type: mongodb
+    endpoint: "mongodb://mongo-1:27017,mongo-2:27017"
+    auth:
+      username: pudding
+      password: "${secret:env/MONGO_PASSWORD}"
+    properties:
+      authSource: admin
+      replicaSet: rs0
+
+source:
+  - type: "mongodb-source"
+    describe: "read orders from MongoDB"
+    id: "source-1"
+    connection: "mongo-prod"
+    config:
+      database: "app"
+      collection: "orders"
+      options:
+        readPreference.name: "secondaryPreferred"
+
+sink:
+  - type: "console-sink"
+    describe: "display the result on the console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"

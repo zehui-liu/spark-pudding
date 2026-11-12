@@ -20,78 +20,71 @@ package org.pudding.source
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import org.pudding.core.PuddingException
-import org.pudding.core.definition.DataSource
+import org.pudding.core.definition.{
+  DataSource,
+  IncrementalRead,
+  IncrementalRequest,
+  IncrementalSemantics,
+  IncrementalSource,
+  SourceContext
+}
+import org.pudding.connector.jdbc.{JdbcConnectorConfig, JdbcIncremental}
+import org.pudding.connector.jdbc.JdbcConnectorConfig.DriverKey
 
 /**
- *
+ * Reads a MySQL table through Spark's JDBC data source. Batch mode supports any table; sync
+ * incremental reads require a top-level `cursorField` and support `append` or `upsert` semantics.
  */
-class MysqlSource extends DataSource {
+class MysqlSource extends DataSource with IncrementalSource {
 
-  private val DEFAULT_DRIVER = "com.mysql.cj.jdbc.Driver"
-
-  private val STREAM_READ_KEY = "streamRead"
-
-  private val URL_KEY = "url"
-
-  private val TABLE_KEY = "table"
-
-  private val USER_KEY = "user"
-
-  private val PASS_WORD_KEY = "password"
-
-  private val OPTIONS_KEY = "options"
-
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "mysql-source"
 
-  /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
+  override def supportedConnectionTypes: Set[String] = Set("jdbc", "mysql")
+
+  override def supportsIncrementalSync: Boolean = true
+
+  override def supportedIncrementalSemantics: Set[IncrementalSemantics] =
+    Set(IncrementalSemantics.Append, IncrementalSemantics.Upsert)
+
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
-    // config parameter must exist
-    val cfg = config match {
-      case Some(cfg) => cfg
-      case None => throw new PuddingException("config can not be null!")
-    }
+    this.initData(sparkSession, SourceContext(config))
+  }
 
-    // url parameter must exist
-    val url = this.getMapValueThrow[String](cfg, URL_KEY)
+  override def initData(sparkSession: SparkSession, context: SourceContext): DataFrame = {
+    val options = MysqlSource.readerOptions(context)
+    sparkSession.read.format("jdbc").options(options).load()
+  }
 
-    // table parameter must exist
-    val table = this.getMapValueThrow[String](cfg, TABLE_KEY)
+  override def readIncremental(
+      sparkSession: SparkSession,
+      context: SourceContext,
+      request: IncrementalRequest): IncrementalRead = {
+    val cfg = context.config.getOrElse(
+      throw new PuddingException("config can not be null!"))
+    JdbcIncremental.read(sparkSession, MysqlSource.readerOptions(context), cfg, request)
+  }
+}
 
-    val user = this.getMapValueThrow[String](cfg, USER_KEY)
-    val password = this.getMapValueThrow[String](cfg, PASS_WORD_KEY)
+private[source] object MysqlSource {
 
-    // options parameter is optional
-    val options = cfg.get(OPTIONS_KEY) match {
-      case Some(options) => options.asInstanceOf[Map[String, String]]
+  private val DefaultDriver = "com.mysql.cj.jdbc.Driver"
+
+  def readerOptions(context: SourceContext): Map[String, String] = {
+    val cfg = context.config.getOrElse(throw new PuddingException("config can not be null!"))
+    val nativeOptions = context.connection match {
+      case Some(connection) =>
+        if (connection.`type` != "jdbc" && connection.`type` != "mysql") {
+          throw new PuddingException(
+            s"mysql-source requires a jdbc or mysql connection, but got: ${connection.`type`}")
+        }
+        connection.options
       case None => Map.empty[String, String]
     }
-
-    val streamRead = cfg.getOrElse(STREAM_READ_KEY, false).asInstanceOf[Boolean]
-
-    // more configure see apache spark code org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-    val optionsMap = Map(
-      URL_KEY -> url,
-      TABLE_KEY -> table,
-      USER_KEY -> user,
-      PASS_WORD_KEY -> password,
-      "driver" -> DEFAULT_DRIVER
-    ) ++ options
-
-    if (streamRead) {
-      sparkSession.readStream.format("jdbc").options(optionsMap).load()
+    val effectiveConfig = if (!nativeOptions.contains(DriverKey) && !cfg.contains(DriverKey)) {
+      cfg + (DriverKey -> DefaultDriver)
     } else {
-      sparkSession.read.format("jdbc").options(optionsMap).load()
+      cfg
     }
+    JdbcConnectorConfig.connectionOptions(effectiveConfig, nativeOptions)
   }
 }

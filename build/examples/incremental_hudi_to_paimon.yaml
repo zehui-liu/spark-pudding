@@ -1,0 +1,51 @@
+job:
+  mode: "sync"
+  strategy: incremental
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "incremental Hudi to Paimon example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "apply Hudi CDC changes to a Paimon primary-key table"
+  config:
+    spark.ui.enabled: "false"
+
+catalog:
+  - name: paimon_lake
+    type: paimon
+    properties:
+      warehouse: "hdfs://namenode:8020/paimon/warehouse"
+      metastore: "filesystem"
+
+source:
+  - type: "hudi-source"
+    describe: "read Hudi changes incrementally"
+    id: "source-1"
+    config:
+      table: "orders"
+      tablePath: "hdfs://namenode:8020/hudi/orders"
+      incremental:
+        semantics: "cdc"
+        keyFields: [id]
+        opColumn: "__op"
+        # First run imports the full snapshot; later runs continue from statePath.
+        initial: "full"
+        statePath: "hdfs://namenode:8020/pudding/state/hudi-orders"
+        # For a shared/strongly consistent store, replace statePath with an incremental.state
+        # block (backend=filesystem|jdbc|redis|etcd) and optionally set lockTtlMs for a renewable
+        # lease with fencing. Redis supports single/sentinel/cluster; etcd uses a native lease.
+        # See doc/incremental-sync.md.
+        # auto replays a pending batch only for idempotent sinks.
+        recovery: "auto"
+
+sink:
+  - type: "paimon-sink"
+    describe: "apply changes to an existing Paimon primary-key table"
+    id: "sink-1"
+    catalog: "paimon_lake"
+    config:
+      # The table must exist and its primary keys must match source keyFields.
+      table: "sales.orders"
+      primaryKey: [id]
+      mode: "append"
+    dependency: "source-1"

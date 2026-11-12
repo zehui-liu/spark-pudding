@@ -1,0 +1,47 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark write mongodb example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "write a DataFrame to MongoDB"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: mongo-prod
+    type: mongodb
+    endpoint: "mongodb://mongo-1:27017,mongo-2:27017"
+    auth:
+      username: "pudding"
+      password: "${secret:env/MONGO_PASSWORD}"
+    properties:
+      authSource: "admin"
+      replicaSet: "rs0"
+
+source:
+  - type: "file-common-source"
+    id: "source-1"
+    config:
+      path: "hdfs:///user/pudding/examples/data/demo.csv"
+      fileType: "csv"
+      streamRead: false
+      options:
+        header: "true"
+
+sink:
+  - type: "mongodb-sink"
+    id: "sink-1"
+    connection: "mongo-prod"
+    config:
+      database: "app"
+      collection: "orders"
+      operation: "update"
+      idFields: [col1]
+      upsert: true
+      mode: "append"
+      options:
+        maxBatchSize: 512
+        writeConcern.w: "majority"
+    dependency: "source-1"

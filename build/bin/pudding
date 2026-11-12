@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Unified entry point for the spark-pudding distribution.
+#
+# Each subcommand delegates to an internal script under bin/lib so every tool
+# keeps its own classpath and runtime requirements.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+  cat <<'EOF'
+spark-pudding unified command line.
+
+Usage:
+  pudding <command> [arguments...]
+
+Commands:
+  submit <env.properties> <job-file> [log-file]
+      Submit a job through the bundled client. The execution target is
+      derived from the job master.
+  checkpoint <show|status|delete|cleanup> ...
+      Inspect or remove Structured Streaming checkpoints.
+  state <show|status|list|reset|resolve|unlock|migrate> ...
+      Inspect or repair incremental state.
+  capabilities <verify|show|diff> ...
+      Verify or compare the distribution capability manifest.
+  maintenance <iceberg|paimon|hudi> <action> ...
+      Run a one-shot table-maintenance action through spark-submit.
+  maintenance-server ...
+      Start the HTTP maintenance control plane.
+  k8s submit ...
+      Submit a job to Kubernetes through the bundled client.
+  k8s build-image ...
+      Build the Spark Kubernetes image.
+  k8s kind-setup ...
+      Create the local kind cluster used by the Kubernetes scripts.
+  verify <distribution-dir> [repository-root]
+      Verify an assembled distribution. Available in the source tree only;
+      this is the same operation as verify-distribution.sh.
+  help
+      Show this help.
+
+Run `pudding <command> --help` for command-specific options. Arguments are
+passed through unchanged. The implementation scripts live under bin/lib/.
+EOF
+}
+
+die() {
+  echo "pudding: $*" >&2
+  exit 2
+}
+
+require_script() {
+  local script="$1"
+  [[ -x "$script" ]] || die "command is not available in this distribution: $(basename "$script")"
+}
+
+command="${1:-}"
+if [[ -z "$command" ]]; then
+  usage >&2
+  exit 2
+fi
+shift
+
+case "$command" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  submit|job)
+    require_script "$SCRIPT_DIR/lib/submit.sh"
+    exec "$SCRIPT_DIR/lib/submit.sh" "$@"
+    ;;
+  checkpoint)
+    require_script "$SCRIPT_DIR/lib/checkpoint.sh"
+    exec "$SCRIPT_DIR/lib/checkpoint.sh" "$@"
+    ;;
+  state)
+    require_script "$SCRIPT_DIR/lib/state.sh"
+    exec "$SCRIPT_DIR/lib/state.sh" "$@"
+    ;;
+  capabilities)
+    require_script "$SCRIPT_DIR/lib/capabilities.sh"
+    exec "$SCRIPT_DIR/lib/capabilities.sh" "$@"
+    ;;
+  maintenance)
+    require_script "$SCRIPT_DIR/lib/maintenance.sh"
+    exec "$SCRIPT_DIR/lib/maintenance.sh" "$@"
+    ;;
+  maintenance-server)
+    require_script "$SCRIPT_DIR/lib/maintenance-server.sh"
+    exec "$SCRIPT_DIR/lib/maintenance-server.sh" "$@"
+    ;;
+  k8s|kubernetes)
+    subcommand="${1:-}"
+    if [[ -z "$subcommand" ]]; then
+      die "missing k8s subcommand (submit, build-image or kind-setup)"
+    fi
+    shift
+    case "$subcommand" in
+      submit)
+        require_script "$SCRIPT_DIR/lib/k8s-submit.sh"
+        exec "$SCRIPT_DIR/lib/k8s-submit.sh" "$@"
+        ;;
+      build-image)
+        require_script "$SCRIPT_DIR/lib/k8s-build-image.sh"
+        exec "$SCRIPT_DIR/lib/k8s-build-image.sh" "$@"
+        ;;
+      kind-setup)
+        require_script "$SCRIPT_DIR/lib/k8s-kind-setup.sh"
+        exec "$SCRIPT_DIR/lib/k8s-kind-setup.sh" "$@"
+        ;;
+      -h|--help|help)
+        usage
+        exit 0
+        ;;
+      *)
+        die "unknown k8s subcommand: $subcommand"
+        ;;
+    esac
+    ;;
+  verify)
+    require_script "$SCRIPT_DIR/verify-distribution.sh"
+    exec "$SCRIPT_DIR/verify-distribution.sh" "$@"
+    ;;
+  *)
+    echo "pudding: unknown command: $command" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

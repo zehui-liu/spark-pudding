@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>source</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>iceberg-source</artifactId>
@@ -54,14 +54,24 @@
             <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!--
+          Iceberg runtime is packaged once by runtime/iceberg-runtime; this connector compiles
+          against it as provided and does not embed it.
+        -->
         <dependency>
             <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-spark-runtime-3.4_2.12</artifactId>
-            <version>1.5.0</version>
+            <artifactId>iceberg-spark-runtime-${iceberg.spark.binary.version}_${scala.binary.version}</artifactId>
+            <version>${iceberg.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-collection-compat_${scala.binary.version}</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -75,10 +85,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

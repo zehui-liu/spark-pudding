@@ -19,7 +19,7 @@ package org.pudding.core.spark.mock
 
 import scala.collection.immutable._
 
-import org.pudding.core.configure.{JobConf, SinkConf, SourceConf, TransformConf}
+import org.pudding.core.configure.{JobConf, JobMode, SourceConf, TransformConf}
 
 
 /**
@@ -31,11 +31,11 @@ object MockConf {
     "",
     Option.empty[String],
     "local test",
-    "",
+    "local[2]",
     "",
     Option("describe"),
-    Option("true"),
-    Option(Map("spark.master" -> "local[2]"))
+    Option(Map("spark.master" -> "local[2]")),
+    JobMode.Batch
   )
 
   val mockSourceCfg: SourceConf = SourceConf(
@@ -51,14 +51,6 @@ object MockConf {
     "trans_1",
     Option(Map.empty[String, Object]),
     Seq("source_1")
-  )
-
-  val mockSinkCfg: SinkConf = SinkConf(
-    "mock_sink",
-    Option("just for test"),
-    "sink_1",
-    Option(Map.empty[String, Object]),
-    "trans_1"
   )
 
 }

@@ -24,7 +24,7 @@ import scala.collection.JavaConverters._
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import org.pudding.core.configure.SourceConf
+import org.pudding.core.configure.{ExecutionMode, SourceConf}
 import org.pudding.core.{EasyHandle, PuddingException}
 
 /**
@@ -34,23 +34,91 @@ import org.pudding.core.{EasyHandle, PuddingException}
 trait DataSource extends EasyHandle with Logging with Serializable {
 
   /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
+   * Unique identifier used as the source `type` in job configuration.
    */
   def identifier: String
 
   /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config       Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
+   * Reads the source and returns its DataFrame. Implementations validate their own configuration.
    */
   def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame
+
+  /**
+   * Reads the source with resolved connection and catalog references. The default implementation
+   * delegates to the config-only overload so existing connectors keep working.
+   */
+  def initData(sparkSession: SparkSession, context: SourceContext): DataFrame = {
+    this.initData(sparkSession, context.config)
+  }
+
+  /**
+   * Execution modes this source supports. Batch is the safe default for existing connectors.
+   */
+  def supportedExecutionModes: Set[ExecutionMode] = Set(ExecutionMode.Batch)
+
+  /**
+   * Whether this source participates in the constrained sync incremental mode.
+   *
+   * The older name referred to the initial lakehouse-only implementation. New sources should
+   * override this method; the default keeps existing lakehouse implementations compatible.
+   */
+  def supportsIncrementalSync: Boolean = supportsLakeIncremental
+
+  /**
+   * Legacy capability name retained for source compatibility.
+   */
+  @deprecated("override supportsIncrementalSync", "1.0.0")
+  def supportsLakeIncremental: Boolean = false
+
+  /**
+   * Whether this source can consume a top-level connection definition.
+   */
+  def supportsConnection: Boolean = this.supportedConnectionTypes.nonEmpty
+
+  /**
+   * Whether this source can consume a top-level catalog definition.
+   */
+  def supportsCatalog: Boolean = this.supportedCatalogTypes.nonEmpty
+
+  /**
+   * Connection types accepted by this source. An external source that accepts any connection type
+   * must override `supportsConnection` as well; the default `supportsConnection` is false when
+   * this set is empty.
+   */
+  def supportedConnectionTypes: Set[String] = Set.empty
+
+  /**
+   * Catalog types accepted by this source.
+   */
+  def supportedCatalogTypes: Set[String] = Set.empty
 }
 
 object DataSource {
+
+  /**
+   * identifiers of all available DataSource implementations, used to validate a pipeline before
+   * Spark is started.
+   */
+  def identifiers: Set[String] = this.loadServices().keySet
+
+  /**
+   * all available source implementations, keyed by identifier.
+   */
+  def services(): Map[String, DataSource] = this.loadServices()
+
+  /**
+   * capabilities of every source implementation, used to reject unsupported references before
+   * a Spark session is created.
+   */
+  def capabilities(): Map[String, ComponentCapabilities] = {
+    this.loadServices().map { case (identifier, source) =>
+      identifier -> ComponentCapabilities(
+        source.supportsConnection,
+        source.supportsCatalog,
+        source.supportedConnectionTypes,
+        source.supportedCatalogTypes)
+    }
+  }
 
   /**
    * factory method
@@ -59,12 +127,18 @@ object DataSource {
    * @return map[id, (DataSource, config map)]
    */
   def apply(sourceCfs: Seq[SourceConf]): Map[String, (DataSource, Option[Map[String, Any]])] = {
-    assert(sourceCfs.nonEmpty)
-    val serviceLoader = ServiceLoader.load(classOf[DataSource])
-    val identifierAndServices = serviceLoader.iterator().asScala.toList.map(s => s.identifier -> s).toMap
+    if (sourceCfs == null || sourceCfs.isEmpty) {
+      throw new PuddingException("sourceCfs can not be empty!")
+    }
 
+    val identifierAndServices = this.loadServices()
     sourceCfs.map(s => (s.id, identifierAndServices.getOrElse(s.`type`,
       throw new PuddingException(s"${s.`type`} can not get DataSource implement!")) -> s.config))
       .toMap
+  }
+
+  private def loadServices(): Map[String, DataSource] = {
+    val serviceLoader = ServiceLoader.load(classOf[DataSource])
+    serviceLoader.iterator().asScala.map(s => s.identifier -> s).toMap
   }
 }

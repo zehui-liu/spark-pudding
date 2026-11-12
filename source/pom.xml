@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>spark-pudding-parent</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>source</artifactId>
@@ -37,6 +37,10 @@
         <module>kafka-source</module>
         <module>elasticsearch-source</module>
         <module>mysql-source</module>
+        <module>jdbc-source</module>
+        <module>mongodb-source</module>
+        <module>paimon-source</module>
+        <module>database-cdc-source</module>
     </modules>
 
 </project>

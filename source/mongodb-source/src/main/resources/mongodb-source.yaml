@@ -1,0 +1,15 @@
+connection:
+  - name: mongodb-prod
+    type: mongodb
+    endpoint: mongodb://localhost:27017
+
+source:
+  - type: mongodb-source
+    describe: read a collection through the MongoDB Spark connector
+    id: source-1
+    connection: mongodb-prod
+    config:
+      database: app
+      collection: orders
+      options:
+        readPreference.name: secondaryPreferred

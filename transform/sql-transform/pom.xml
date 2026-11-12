@@ -23,14 +23,12 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>transform</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>sql-transform</artifactId>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

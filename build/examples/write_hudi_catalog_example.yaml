@@ -1,0 +1,56 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark write hudi catalog example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "write a Hudi table through a Hudi session catalog"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: hms-prod
+    type: hive-metastore
+    endpoint: "thrift://hms-1:9083,thrift://hms-2:9083"
+
+catalog:
+  - name: hudi_lake
+    type: hudi
+    connection: hms-prod
+    properties:
+      warehouse: "hdfs://namenode:8020/warehouse"
+
+source:
+  - type: "file-common-source"
+    describe: "read the input CSV file"
+    id: "source-1"
+    config:
+      path: "hdfs:///user/pudding/examples/data/demo.csv"
+      fileType: "csv"
+      streamRead: false
+      forceConvertSchema: true
+      options:
+        header: "true"
+        delimiter: ","
+      schema:
+        col1: string
+        col2: string
+        col3: string
+        col4: string
+
+sink:
+  - type: "hudi-sink"
+    describe: "upsert into a partitioned Hudi table"
+    id: "sink-1"
+    catalog: "hudi_lake"
+    config:
+      # The target database must already exist.
+      table: "sales.orders_hudi"
+      operation: "upsert"
+      tableType: "COPY_ON_WRITE"
+      recordKeyFields: [col1]
+      partitionBy: [col2]
+      preCombineField: col3
+      mode: "append"
+    dependency: "source-1"

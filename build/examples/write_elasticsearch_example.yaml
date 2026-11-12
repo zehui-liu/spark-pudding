@@ -1,0 +1,43 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark write elasticsearch example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "write a DataFrame to Elasticsearch"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: es-prod
+    type: elasticsearch
+    endpoint: "https://es-1:9200,es-2:9200"
+    auth:
+      username: "elastic"
+      password: "${secret:env/ES_PASSWORD}"
+    properties:
+      nodes.wan.only: "true"
+
+source:
+  - type: "file-common-source"
+    id: "source-1"
+    config:
+      path: "hdfs:///user/pudding/examples/data/demo.csv"
+      fileType: "csv"
+      streamRead: false
+      options:
+        header: "true"
+
+sink:
+  - type: "elasticsearch-sink"
+    id: "sink-1"
+    connection: "es-prod"
+    config:
+      esIndex: "demo-orders"
+      operation: "index"
+      idField: "col1"
+      mode: "append"
+      options:
+        es.batch.size.entries: 1000
+    dependency: "source-1"

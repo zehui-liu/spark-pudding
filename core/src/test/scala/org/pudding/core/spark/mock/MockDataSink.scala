@@ -18,10 +18,11 @@
 package org.pudding.core.spark.mock
 
 import org.apache.spark.sql.DataFrame
+import org.pudding.core.configure.ExecutionMode
 import org.pudding.core.definition.DataSink
 
 /**
- *
+ * Test sink that prints a DataFrame using the console sink's display options.
  */
 class MockDataSink extends DataSink {
 
@@ -45,24 +46,15 @@ class MockDataSink extends DataSink {
    */
   private val PRINT_SCHEMA_KEY = "printSchema"
 
-  /**
-   * default Int.MaxValue
-   */
-  private val LEVEL_KEY = "level"
-
-  /**
-   * Data sink identifier，Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "show-sink"
 
-  /**
-   * Writer dataframe
-   *
-   * @param dataFrame DataFrame
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   */
+  override def supportedExecutionModes: Set[ExecutionMode] =
+    Set(ExecutionMode.Batch, ExecutionMode.Streaming)
+
+  override def supportsFullRefresh: Boolean = true
+
+  override def supportsAtomicReplace: Boolean = true
+
   override def writer(dataFrame: DataFrame, config: Option[Map[String, Any]]): Unit = {
 
     config match {

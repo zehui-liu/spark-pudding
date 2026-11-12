@@ -1,0 +1,16 @@
+source:
+  - type: jdbc-source
+    describe: batch or sync-incremental read through Spark's JDBC data source
+    id: source-1
+    config:
+      # Never put credentials in a URL; provide them below or inject them server-side.
+      url: jdbc:postgresql://<hostname>:<port>/<database_name>?<parameters>
+      table: public.tbl
+      user: <user>
+      password: '<redacted>'
+      # Optional for PostgreSQL (org.postgresql.Driver is inferred); required for
+      # other databases, whose driver must also be available on the classpath.
+      # driver: org.postgresql.Driver
+      # Additional Spark JDBC options, for example fetchsize or partitionColumn.
+      options:
+        fetchsize: '1000'

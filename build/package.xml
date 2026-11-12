@@ -36,10 +36,24 @@ limitations under the License.
             </includes>
         </fileSet>
 
+        <!-- Generated at prepare-package by CapabilityGenerator. -->
+        <fileSet>
+            <directory>target</directory>
+            <includes>
+                <include>capabilities.yaml</include>
+            </includes>
+            <outputDirectory>/</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
         <fileSet>
             <directory>bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
+            <excludes>
+                <!-- Build-time verification only; it requires the module poms. -->
+                <exclude>verify-distribution.sh</exclude>
+            </excludes>
         </fileSet>
 
         <fileSet>
@@ -67,6 +81,24 @@ limitations under the License.
         </fileSet>
 
         <fileSet>
+            <directory>k8s</directory>
+            <outputDirectory>k8s</outputDirectory>
+            <fileMode>0644</fileMode>
+            <excludes>
+                <exclude>entrypoint.sh</exclude>
+            </excludes>
+        </fileSet>
+
+        <fileSet>
+            <directory>k8s</directory>
+            <includes>
+                <include>entrypoint.sh</include>
+            </includes>
+            <outputDirectory>k8s</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <fileSet>
             <directory>../client/target</directory>
             <includes>
                 <include>pudding-client.jar</include>
@@ -79,6 +111,191 @@ limitations under the License.
             <directory>../core/target</directory>
             <includes>
                 <include>pudding-core-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- Shaded API + Spark runner used by bin/pudding maintenance. -->
+        <fileSet>
+            <directory>../maintenance/maintenance-cli/target</directory>
+            <includes>
+                <include>table-maintenance.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- HTTP maintenance control plane. -->
+        <fileSet>
+            <directory>../maintenance/maintenance-server/target</directory>
+            <includes>
+                <include>maintenance-server.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- connection and catalog provider implementations -->
+        <fileSet>
+            <directory>../provider/connection-providers/target</directory>
+            <includes>
+                <include>connection-providers-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../provider/catalog-providers/target</directory>
+            <includes>
+                <include>catalog-providers-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../provider/redis-state-provider/target</directory>
+            <includes>
+                <include>redis-state-provider-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../provider/etcd-state-provider/target</directory>
+            <includes>
+                <include>etcd-state-provider-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- shared connector support libraries -->
+        <fileSet>
+            <directory>../connector/jdbc-common/target</directory>
+            <includes>
+                <include>jdbc-common-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- shared connector runtimes -->
+        <fileSet>
+            <directory>../runtime/hadoop-aws-runtime/target</directory>
+            <includes>
+                <include>hadoop-aws-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/hadoop-oss-runtime/target</directory>
+            <includes>
+                <include>hadoop-oss-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/hadoop-azure-runtime/target</directory>
+            <includes>
+                <include>hadoop-azure-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/gcs-runtime/target</directory>
+            <includes>
+                <include>gcs-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/hadoop-cos-runtime/target</directory>
+            <includes>
+                <include>hadoop-cos-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/hudi-runtime/target</directory>
+            <includes>
+                <include>hudi-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/paimon-runtime/target</directory>
+            <includes>
+                <include>paimon-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/iceberg-runtime/target</directory>
+            <includes>
+                <include>iceberg-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/elasticsearch-runtime/target</directory>
+            <includes>
+                <include>elasticsearch-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/mongodb-runtime/target</directory>
+            <includes>
+                <include>mongodb-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/kafka-runtime/target</directory>
+            <includes>
+                <include>kafka-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/kafka-schema-registry-runtime/target</directory>
+            <includes>
+                <include>kafka-schema-registry-runtime-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../runtime/cdc-runtime/target</directory>
+            <includes>
+                <include>cdc-runtime-${project.version}.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
             <fileMode>0644</fileMode>
@@ -113,9 +330,9 @@ limitations under the License.
         </fileSet>
 
         <fileSet>
-            <directory>../source/jdbc-common-source/target</directory>
+            <directory>../source/iceberg-source/target</directory>
             <includes>
-                <include>jdbc-common-source-${project.version}.jar</include>
+                <include>iceberg-source-${project.version}.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
             <fileMode>0644</fileMode>
@@ -148,11 +365,56 @@ limitations under the License.
             <fileMode>0644</fileMode>
         </fileSet>
 
+        <fileSet>
+            <directory>../source/jdbc-source/target</directory>
+            <includes>
+                <include>jdbc-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../source/mongodb-source/target</directory>
+            <includes>
+                <include>mongodb-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../source/paimon-source/target</directory>
+            <includes>
+                <include>paimon-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../source/database-cdc-source/target</directory>
+            <includes>
+                <include>database-cdc-source-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
         <!-- transform jar add libs-->
         <fileSet>
             <directory>../transform/sql-transform/target</directory>
             <includes>
                 <include>sql-transform-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../transform/basic-transform/target</directory>
+            <includes>
+                <include>basic-transform-${project.version}.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
             <fileMode>0644</fileMode>
@@ -187,6 +449,15 @@ limitations under the License.
         </fileSet>
 
         <fileSet>
+            <directory>../sink/iceberg-sink/target</directory>
+            <includes>
+                <include>iceberg-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
             <directory>../sink/hudi-sink/target</directory>
             <includes>
                 <include>hudi-sink-${project.version}.jar</include>
@@ -199,6 +470,51 @@ limitations under the License.
             <directory>../sink/mysql-sink/target</directory>
             <includes>
                 <include>mysql-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/jdbc-sink/target</directory>
+            <includes>
+                <include>jdbc-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/paimon-sink/target</directory>
+            <includes>
+                <include>paimon-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/elasticsearch-sink/target</directory>
+            <includes>
+                <include>elasticsearch-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/mongodb-sink/target</directory>
+            <includes>
+                <include>mongodb-sink-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>../sink/kafka-sink/target</directory>
+            <includes>
+                <include>kafka-sink-${project.version}.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
             <fileMode>0644</fileMode>

@@ -1,11 +1,11 @@
 job:
-  sparkHome: '/Users/zhliu/env/bg-env/spark-3.3.0-bin-hadoop3'
-  sparkPuddingHome: '/Users/zhliu/Desktop/spark-pudding-0.0.1-SNAPSHOT'
+  mode: "batch"
+  sparkHome: '/opt/spark'
+  sparkPuddingHome: '/opt/spark-pudding'
   appName: 'spark read csv example job'
   master: yarn
-  deployMode: client 
+  deployMode: client
   describe: spark test job
-  enableHiveSupport: 'true'
   config:
     spark.executor.memory: 512m
     spark.executor.cores: '1'
@@ -16,10 +16,10 @@ job:
 
 source:
   - type: file-common-source
-    describe: file common source,local file or hdfs file
+    describe: read a CSV file
     id: source-1
     config:
-      path: hdfs:///user/liuzehui/spark-pudding/examples/data/demo.csv
+      path: hdfs:///user/pudding/examples/data/demo.csv
       fileType: csv
       streamRead: false
       textDelimiter: ','
@@ -36,7 +36,7 @@ source:
 
 sink:
   - type: console-sink
-    describe: show data on console
+    describe: display the result on the console
     id: sink1
     config:
       isStreaming: false

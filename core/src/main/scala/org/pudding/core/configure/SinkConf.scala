@@ -25,5 +25,6 @@ case class SinkConf(
   describe: Option[String],
   id: String,
   config: Option[Map[String, Any]],
-  dependency: String
-)
+  dependency: String,
+  connection: Option[String] = None,
+  catalog: Option[String] = None)

@@ -1,0 +1,45 @@
+job:
+  mode: streaming
+  appName: streaming-dedup
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+source:
+  - id: kafka_orders
+    type: kafka-source
+    config:
+      kafkaBootstrapServers: "localhost:9092"
+      subscribe: orders
+      valueFormat: json
+      valueSchema:
+        order_id: long
+        order_time: timestamp
+        order_city: string
+        amount: decimal(12,2)
+      options:
+        startingOffsets: earliest
+
+transform:
+  # State is evicted after the watermark passes the record's event time. A duplicate that arrives
+  # after eviction can be emitted again; use a primary-key sink for absolute deduplication.
+  - id: dedup_orders
+    type: dedup-transform
+    dependencies: [kafka_orders]
+    config:
+      keys: [order_id]
+      eventTime: order_time
+      watermark: "10 minutes"
+
+sink:
+  - id: dedup_output
+    type: file-sink
+    dependency: dedup_orders
+    config:
+      path: "file:///tmp/pudding/dedup"
+      fileType: parquet
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/dedup"
+      checkpointRetention: keep

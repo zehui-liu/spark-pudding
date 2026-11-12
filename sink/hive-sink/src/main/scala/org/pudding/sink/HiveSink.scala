@@ -17,29 +17,78 @@
 
 package org.pudding.sink
 
+import java.util.Locale
+
 import org.apache.spark.sql.DataFrame
 
-import org.pudding.core.definition.DataSink
+import org.pudding.core.PuddingException
+import org.pudding.core.definition.{DataSink, SinkContext}
 
 /**
- *
+ * Writes a DataFrame to a Hive table using Spark's save modes and optional partitioning.
  */
-class HiveSink extends DataSink{
+class HiveSink extends DataSink {
 
-  /**
-   * Data sink identifier，Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
+  private val TABLE_KEY = "table"
+
+  private val MODE_KEY = "mode"
+
+  private val PARTITION_BY_KEY = "partitionBy"
+
+  private val DEFAULT_MODE = "append"
+
   override def identifier: String = "hive-sink"
 
-  /**
-   * Writer dataframe
-   *
-   * @param dataFrame DataFrame
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   */
+  override def supportsFullRefresh: Boolean = true
+
+  override def supportedCatalogTypes: Set[String] = Set("hive")
+
   override def writer(dataFrame: DataFrame, config: Option[Map[String, Any]]): Unit = {
-    // todo
+    this.writer(dataFrame, SinkContext(config))
+  }
+
+  override def writer(dataFrame: DataFrame, context: SinkContext): Unit = {
+    context.catalog.foreach { catalog =>
+      if (catalog.`type` != "hive") {
+        throw new PuddingException(
+          s"hive-sink requires a hive catalog, but got: ${catalog.`type`}")
+      }
+    }
+
+    val cfg = context.config match {
+      case Some(cfg) => cfg
+      case None => throw new PuddingException("config can not be null!")
+    }
+
+    val table = this.getMapValueThrow[String](cfg, TABLE_KEY)
+    if (table.trim.isEmpty) {
+      throw new PuddingException("table can not be empty!")
+    }
+
+    val mode = cfg.get(MODE_KEY) match {
+      case Some(mode: String) => this.parseMode(mode)
+      case Some(mode) => throw new PuddingException(s"mode must be string, but got: $mode")
+      case None => DEFAULT_MODE
+    }
+
+    // Accept either a sequence or a comma-separated string for partition columns.
+    val partitionBy = cfg.get(PARTITION_BY_KEY) match {
+      case Some(columns: Seq[_]) => columns.map(_.toString)
+      case Some(columns: String) => columns.split(",").map(_.trim).filter(_.nonEmpty).toSeq
+      case Some(_) => throw new PuddingException("partitionBy must be a array or comma-separated string!")
+      case None => Seq.empty[String]
+    }
+
+    val dataFrameWriter = dataFrame.write.mode(mode)
+    if (partitionBy.nonEmpty) {
+      dataFrameWriter.partitionBy(partitionBy: _*).saveAsTable(table)
+    } else {
+      dataFrameWriter.saveAsTable(table)
+    }
+  }
+
+  private def parseMode(mode: String): String = mode.toLowerCase(Locale.ROOT) match {
+    case "append" | "overwrite" | "ignore" | "error" | "errorifexists" => mode
+    case _ => throw new PuddingException(s"unsupported save mode: $mode")
   }
 }

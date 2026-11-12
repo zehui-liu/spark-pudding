@@ -1,0 +1,25 @@
+catalog:
+  - name: paimon
+    type: paimon
+    properties:
+      warehouse: "hdfs://namenode:8020/paimon/warehouse"
+      metastore: "hive"
+      uri: "thrift://hive-metastore:9083"
+
+source:
+  - type: "paimon-source"
+    describe: "read a Paimon table"
+    id: "source-1"
+    catalog: "paimon"
+    config:
+      table: "default.orders"
+      # Batch read options; all Paimon read options are also accepted in options.
+      scanMode: "latest-full"
+      filterExpr: "dt >= '2026-01-01'"
+      numPartitions: 10
+      options:
+        scan.snapshot-id: 10
+      # Streaming read:
+      # streamRead: true
+      # scanMode: "from-timestamp"
+      # timestampMillis: 1760000000000

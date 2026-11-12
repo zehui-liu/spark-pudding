@@ -1,0 +1,31 @@
+source:
+  - type: mysql-cdc-source
+    describe: read MySQL binlog changes as a Structured Streaming source
+    id: source-1
+    connection: mysql
+    config:
+      database: inventory
+      table: orders
+      # Required: Spark Structured Streaming needs a stable schema across micro-batches.
+      schema: "id bigint, name string, amount decimal(12, 2)"
+      # initial (default), when_needed, schema_only, schema_only_recovery, never, initial_only
+      snapshotMode: initial
+      maxRecordsPerBatch: 1000
+      # queueCapacity: 10000
+      # opColumn: __op
+      # Optional Debezium properties. database.history defaults to the Hadoop-backed history
+      # stored under the sink checkpoint.
+      # options:
+      #   database.history: "io.debezium.relational.history.MemoryDatabaseHistory"
+      #   connect.timeout.ms: "30000"
+
+# The connection is a normal mysql or jdbc connection. The database and table stay in the source
+# config because they identify the captured resource:
+#
+# connection:
+#   - name: mysql
+#     type: mysql
+#     endpoint: "jdbc:mysql://mysql:3306/inventory"
+#     auth:
+#       user: "pudding"
+#       password: "${secret:env/MYSQL_PASSWORD}"

@@ -17,8 +17,6 @@
 
 package org.pudding.core
 
-import java.util.Locale
-
 import org.rogach.scallop.{ScallopConf, ScallopOption}
 
 import org.pudding.core.spark.BuildJob
@@ -31,42 +29,36 @@ class Conf(arguments: Array[String]) extends ScallopConf(arguments) {
   )
   val jobText: ScallopOption[String] = opt[String](
     name = "jobText",
-    required = true,
-    descr = "configure Text"
+    required = false,
+    descr = "configuration text; mutually exclusive with --jobEnv and --jobFile"
+  )
+  val jobEnv: ScallopOption[String] = opt[String](
+    name = "jobEnv",
+    required = false,
+    descr = "environment variable containing the configuration; mutually exclusive with " +
+      "--jobText and --jobFile"
+  )
+  val jobFile: ScallopOption[String] = opt[String](
+    name = "jobFile",
+    required = false,
+    descr = "path to a configuration file; mutually exclusive with --jobText and --jobEnv"
   )
   verify()
 }
 
 /**
- * main class
+ * Command-line entry point that resolves the job text and builds the pipeline for submission.
  */
 object PuddingSpoon {
 
   def main(args: Array[String]): Unit = {
     val conf = new Conf(args)
-    val jobPipelineConf = JobConfigureParser(conf.confType()).parseFromString(conf.jobText())
+    val jobText = JobConfigSource.resolve(
+      conf.jobText.toOption,
+      conf.jobEnv.toOption,
+      conf.jobFile.toOption)
+    val jobPipelineConf = JobConfigureParser(conf.confType()).parseFromString(jobText)
     BuildJob.buildSparkJob(jobPipelineConf)
-  }
-
-  /**
-   * get configure file type from path file name
-   *
-   * @param pipelineCfgPath String
-   * @return String
-   */
-  def getFileType(pipelineCfgPath: String): String = {
-    pipelineCfgPath.lastIndexOf(".") match {
-      case -1 =>
-        throw new PuddingException("configure file must end with .json or .conf or .yaml!")
-      case index =>
-        val fileType = pipelineCfgPath.substring(index + 1).toLowerCase(Locale.ROOT)
-        fileType match {
-          case "yaml" | "json" => fileType
-          case "conf" => "hocon"
-          case _ => throw new PuddingException(
-            s"unsupported configure file type : $fileType, configure file must end with .json or .conf or .yaml!")
-        }
-    }
   }
 
 }

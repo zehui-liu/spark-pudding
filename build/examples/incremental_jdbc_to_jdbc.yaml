@@ -1,0 +1,31 @@
+job:
+  mode: sync
+  strategy: incremental
+  appName: jdbc-incremental-orders
+  master: local[*]
+  deployMode: client
+
+source:
+  - type: jdbc-source
+    id: orders_source
+    config:
+      url: jdbc:postgresql://db.internal:5432/analytics
+      table: public.orders
+      user: pudding_ro
+      password: ${secret:env/ORDERS_DB_PASSWORD}
+      cursorField: updated_at
+      incremental:
+        semantics: upsert
+        keyFields: [id]
+        initial: full
+        statePath: hdfs://namenode:8020/pudding/state/orders
+
+sink:
+  - type: jdbc-sink
+    id: orders_target
+    dependency: orders_source
+    config:
+      url: jdbc:postgresql://warehouse.internal:5432/warehouse
+      table: public.orders
+      user: pudding_rw
+      password: ${secret:env/WAREHOUSE_DB_PASSWORD}

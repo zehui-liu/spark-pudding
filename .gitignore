@@ -36,3 +36,9 @@ target/
 
 ### Mac OS ###
 .DS_Store
+### Spark test warehouses ###
+spark-warehouse/
+metastore_db/
+
+### Local code intelligence index ###
+.codegraph/

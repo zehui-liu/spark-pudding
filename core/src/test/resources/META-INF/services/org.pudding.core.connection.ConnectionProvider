@@ -1,0 +1,2 @@
+org.pudding.core.connection.TestJdbcConnectionProvider
+org.pudding.core.connection.TestKafkaConnectionProvider

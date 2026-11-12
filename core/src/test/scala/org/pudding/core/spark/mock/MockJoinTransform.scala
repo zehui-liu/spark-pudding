@@ -21,28 +21,12 @@ import org.apache.spark.sql.DataFrame
 import org.pudding.core.PuddingException
 import org.pudding.core.definition.DataTransform
 
-/**
- *
- */
 class MockJoinTransform extends DataTransform {
 
   private val JOIN_COLUMN_KEY = "joinColumn"
 
-  /**
-   * transform identifier, Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "mock-join"
 
-  /**
-   * data handle
-   *
-   * @param dataFrames Map[String, DataFrame],mapping map[id, DataFrame], Multiple dataframes can be transmitted,
-   * supporting the merging of multiple dataframes into one to achieve complex logic such as joins
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return Return the dataframe for use by the next transform or data sink
-   */
   override def handle(dataFrames: Map[String, DataFrame], config: Option[Map[String, Any]]): DataFrame = {
     // config parameter must exist
     val cfg = config match {

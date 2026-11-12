@@ -17,66 +17,195 @@
 
 package org.pudding.source
 
+import scala.util.Try
+
 import org.apache.spark.sql.SparkSession
-import org.pudding.core.CommonTestUtils
+import org.apache.spark.sql.types.{DoubleType, StringType}
+import org.pudding.core.catalog.ResolvedCatalog
+import org.pudding.core.definition.SourceContext
+import org.pudding.core.{CommonTestUtils, PuddingException}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 /**
- * test for HiveSource
+ * Reads Hive tables through `hive-source`, including filters and schema projection.
  */
-class HiveSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll{
+class HiveSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 
   private val utils = new CommonTestUtils("test for hive source")
 
+  private val database = "pudding_hive_source_test"
+
+  private val table = s"$database.source_test"
+
   var sparkSession: SparkSession = _
+
+  private var hiveSetupError: Option[Throwable] = None
 
   override def beforeAll(): Unit = {
     utils.initLocalSparkSession()
     sparkSession = utils.sparkSession
 
-    sparkSession.sql("use default")
+    try {
+      sparkSession.sql(s"drop database if exists $database cascade")
+      sparkSession.sql(s"create database $database")
 
-
-    val createTableSql = """create table test (
-                           |    a int,
-                           |    b string
-                           |)""".stripMargin
-    sparkSession.sql(createTableSql)
-
-    val insertTableSql = """insert into
-                           |  test
-                           |select
-                           |  1 as a,
-                           |  "dd" as b""".stripMargin
-    sparkSession.sql(insertTableSql)
-
-    val queryTableSql = "select * from default.test"
-    sparkSession.sql(queryTableSql).show()
-
+      val session = sparkSession
+      import session.implicits._
+      Seq((1, "tom", 20), (2, "jerry", 25), (3, "spark", 30))
+        .toDF("id", "name", "age")
+        .write.mode("overwrite")
+        .saveAsTable(table)
+    } catch {
+      case e: Throwable => hiveSetupError = Some(e)
+    }
   }
 
   override def afterAll(): Unit = {
+    if (sparkSession != null) {
+      Try(sparkSession.sql(s"drop database if exists $database cascade"))
+    }
     utils.closeSparkSession()
   }
 
-  private val mockHiveSourceConfig = Some(Map(
-    "table" -> ""
-  ))
-
-
-  /**
-   * I used mac work. run this test need local have hive service.
-   */
-  test("link hive metastore") {
-
-    sparkSession.sql("show databases").show()
-
-
-
+  private def withHive(testBody: => Any): Unit = {
+    hiveSetupError match {
+      case Some(error) => cancel(s"local hive metastore is not available: ${error.getMessage}")
+      case None => testBody
+    }
   }
 
+  test("read hive table") {
+    withHive {
+      val dataFrame = new HiveSource().initData(sparkSession, Some(Map("table" -> table)))
+      dataFrame.count() shouldBe 3
+      dataFrame.select("id", "name", "age").collect()
+        .map(row => (row.getInt(0), row.getString(1), row.getInt(2)))
+        .toSet shouldBe Set((1, "tom", 20), (2, "jerry", 25), (3, "spark", 30))
+    }
+  }
 
+  test("read hive table through a catalog reference") {
+    withHive {
+      val catalog = ResolvedCatalog(
+        name = "hive_prod",
+        `type` = "hive",
+        sparkCatalogName = "spark_catalog",
+        sessionCatalog = true,
+        sparkConf = Map.empty,
+        properties = Map.empty)
+      val dataFrame = new HiveSource().initData(
+        sparkSession,
+        SourceContext(Some(Map("table" -> table)), catalog = Some(catalog)))
 
+      dataFrame.count() shouldBe 3
+    }
+  }
+
+  test("reject a non-hive catalog reference") {
+    withHive {
+      val catalog = ResolvedCatalog(
+        name = "lake",
+        `type` = "iceberg",
+        sparkCatalogName = "lake",
+        sessionCatalog = false,
+        sparkConf = Map.empty,
+        properties = Map.empty)
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          SourceContext(Some(Map("table" -> table)), catalog = Some(catalog)))
+      }
+    }
+  }
+
+  test("filter hive table by conditionExpr") {
+    withHive {
+      val config = Some(Map("table" -> table, "conditionExpr" -> "age > 21"))
+      val dataFrame = new HiveSource().initData(sparkSession, config)
+      dataFrame.select("id").collect().map(_.getInt(0)).toSet shouldBe Set(2, 3)
+    }
+  }
+
+  test("force convert schema") {
+    withHive {
+      val config = Some(Map(
+        "table" -> table,
+        "forceConvertSchema" -> true,
+        "schema" -> Map("id" -> "string", "age" -> "double")
+      ))
+      val dataFrame = new HiveSource().initData(sparkSession, config)
+
+      dataFrame.schema.fieldNames.toSet shouldBe Set("id", "age")
+      dataFrame.schema("id").dataType shouldBe StringType
+      dataFrame.schema("age").dataType shouldBe DoubleType
+      dataFrame.count() shouldBe 3
+    }
+  }
+
+  test("null config throws PuddingException") {
+    withHive {
+      intercept[PuddingException] {
+        new HiveSource().initData(sparkSession, None)
+      }
+    }
+  }
+
+  test("missing table config throws PuddingException") {
+    withHive {
+      intercept[PuddingException] {
+        new HiveSource().initData(sparkSession, Some(Map.empty[String, Any]))
+      }
+    }
+  }
+
+  test("force convert schema without schema config throws PuddingException") {
+    withHive {
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          Some(Map("table" -> table, "forceConvertSchema" -> true))
+        )
+      }
+    }
+  }
+
+  test("accept a string boolean and reject invalid config types") {
+    withHive {
+      val dataFrame = new HiveSource().initData(
+        sparkSession,
+        Some(Map(
+          "table" -> table,
+          "forceConvertSchema" -> "TRUE",
+          "schema" -> Map("id" -> "string"))))
+      dataFrame.schema.fieldNames.toSeq shouldBe Seq("id")
+
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          Some(Map("table" -> table, "forceConvertSchema" -> "yes")))
+      }
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          Some(Map("table" -> 1)))
+      }
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          Some(Map(
+            "table" -> table,
+            "forceConvertSchema" -> true,
+            "schema" -> "id:string")))
+      }
+      intercept[PuddingException] {
+        new HiveSource().initData(
+          sparkSession,
+          Some(Map(
+            "table" -> table,
+            "conditionExpr" -> 42)))
+      }
+    }
+  }
 }

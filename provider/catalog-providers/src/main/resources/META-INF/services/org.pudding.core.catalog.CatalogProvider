@@ -1,0 +1,6 @@
+org.pudding.provider.catalog.HiveCatalogProvider
+org.pudding.provider.catalog.IcebergCatalogProvider
+org.pudding.provider.catalog.JdbcCatalogProvider
+org.pudding.provider.catalog.HudiCatalogProvider
+org.pudding.provider.catalog.PaimonCatalogProvider
+org.pudding.provider.catalog.GravitinoCatalogProvider

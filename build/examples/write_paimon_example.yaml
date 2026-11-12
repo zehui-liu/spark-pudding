@@ -1,0 +1,51 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark write paimon example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "create and write a primary-key Paimon table"
+  config:
+    spark.ui.enabled: "false"
+
+catalog:
+  - name: paimon_lake
+    type: paimon
+    properties:
+      warehouse: "hdfs://namenode:8020/paimon/warehouse"
+      metastore: "filesystem"
+
+source:
+  - type: "file-common-source"
+    describe: "read the input CSV file"
+    id: "source-1"
+    config:
+      path: "hdfs:///user/pudding/examples/data/demo.csv"
+      fileType: "csv"
+      streamRead: false
+      forceConvertSchema: true
+      options:
+        header: "true"
+        delimiter: ","
+      schema:
+        col1: string
+        col2: string
+        col3: string
+        col4: string
+
+sink:
+  - type: "paimon-sink"
+    describe: "write a bucketed, partitioned Paimon primary-key table"
+    id: "sink-1"
+    catalog: "paimon_lake"
+    config:
+      # The target database must already exist.
+      table: "sales.orders"
+      primaryKey: [col1, col2]
+      partition: [col2]
+      bucket: 1
+      mode: "append"
+      tableOptions:
+        file.format: "parquet"
+    dependency: "source-1"

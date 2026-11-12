@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>source</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>hudi-source</artifactId>
@@ -59,10 +59,20 @@
             <artifactId>scalatest_${scala.binary.version}</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+          The official Spark 3.4 bundle is packaged once by runtime/hudi-runtime. It contains
+          the Hudi SQL/catalog extension, data source, HFile metadata-table support and the
+          relocated HBase/Jetty runtime; Spark, Hadoop and Hive come from the Spark distribution.
+          This connector compiles against it as provided and does not embed it.
+
+          The generic hudi-spark artifact is not used: its Spark integration is compiled against
+          Spark 3.2 and fails with NoSuchMethodError when the extension analyzes a Spark 3.4 plan.
+        -->
         <dependency>
             <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-spark3.2.x_2.12</artifactId>
-            <version>0.13.1</version>
+            <artifactId>hudi-spark${hudi.spark.binary.version}-bundle_${scala.binary.version}</artifactId>
+            <version>${hudi.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -75,10 +85,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

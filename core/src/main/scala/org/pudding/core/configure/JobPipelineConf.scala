@@ -26,5 +26,6 @@ case class JobPipelineConf(
   sources: Seq[SourceConf],
   transforms: Option[Seq[TransformConf]],
   sinks: Seq[SinkConf],
-  job: JobConf
-)
+  job: JobConf,
+  connections: Seq[ConnectionConf] = Seq.empty,
+  catalogs: Seq[CatalogConf] = Seq.empty)

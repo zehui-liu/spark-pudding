@@ -1,0 +1,7 @@
+org.pudding.provider.connection.KafkaConnectionProvider
+org.pudding.provider.connection.JdbcConnectionProvider
+org.pudding.provider.connection.MysqlConnectionProvider
+org.pudding.provider.connection.ElasticsearchConnectionProvider
+org.pudding.provider.connection.MongoConnectionProvider
+org.pudding.provider.connection.HiveMetastoreConnectionProvider
+org.pudding.provider.connection.GravitinoConnectionProvider

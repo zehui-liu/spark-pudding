@@ -1,0 +1,49 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark write kafka example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "write a DataFrame to Kafka"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: kafka-prod
+    type: kafka
+    endpoint: "broker-1:9092,broker-2:9092"
+    auth:
+      mechanism: "SCRAM-SHA-512"
+      username: "pudding"
+      password: "${secret:env/KAFKA_PASSWORD}"
+    properties:
+      security.protocol: "SASL_SSL"
+
+source:
+  - type: "file-common-source"
+    id: "source-1"
+    config:
+      path: "hdfs:///user/pudding/examples/data/demo.csv"
+      fileType: "csv"
+      streamRead: false
+      forceConvertSchema: true
+      options:
+        header: "true"
+      schema:
+        col1: string
+        col2: string
+        col3: string
+        col4: string
+
+sink:
+  - type: "kafka-sink"
+    id: "sink-1"
+    connection: "kafka-prod"
+    config:
+      topic: "demo-orders"
+      valueColumn: "col1"
+      mode: "append"
+      options:
+        acks: "all"
+    dependency: "source-1"

@@ -1,0 +1,13 @@
+sink:
+  - type: iceberg-sink
+    describe: write a dataframe to an Iceberg table in batch, streaming or sync incremental mode
+    id: sink1
+    config:
+      # catalog.schema.table; the Iceberg catalog must be configured on the Spark session
+      table: spark_catalog.default.test
+      # append, overwrite, ignore or error, default is append
+      mode: append
+      # optional, used only when the table is created; supports list or comma-separated string
+      partitionBy:
+        - dt
+    dependency: transform2

@@ -1,0 +1,30 @@
+catalog:
+  - name: paimon
+    type: paimon
+    properties:
+      warehouse: "hdfs://namenode:8020/paimon/warehouse"
+      metastore: "hive"
+      uri: "thrift://hive-metastore:9083"
+
+sink:
+  - type: "paimon-sink"
+    describe: "write a Paimon primary-key table"
+    id: "sink1"
+    catalog: "paimon"
+    dependency: "source-1"
+    config:
+      table: "default.orders_pk"
+      primaryKey: [id, dt]
+      partition: [dt]
+      bucket: 4
+      mode: append
+      tableOptions:
+        merge-engine: "deduplicate"
+        changelog-producer: "input"
+        file.format: "parquet"
+      # Optional path mode (the table must already exist):
+      # path: "hdfs://namenode:8020/paimon/warehouse/default.db/orders_pk"
+      # Streaming write:
+      # isStreaming: true
+      # checkpointLocation: "hdfs://namenode:8020/paimon/checkpoints/orders_pk"
+      # outputMode: "append"

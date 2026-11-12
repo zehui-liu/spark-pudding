@@ -1,0 +1,3 @@
+org.pudding.source.cdc.MysqlCdcSource
+org.pudding.source.cdc.PostgresCdcSource
+org.pudding.source.cdc.MongodbCdcSource

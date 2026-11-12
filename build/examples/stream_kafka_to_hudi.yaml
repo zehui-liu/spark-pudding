@@ -1,0 +1,45 @@
+job:
+  mode: streaming
+  appName: kafka-to-hudi-streaming
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+source:
+  - id: kafka_orders
+    type: kafka-source
+    config:
+      kafkaBootstrapServers: "localhost:9092"
+      subscribe: orders
+      valueFormat: json
+      valueSchema:
+        id: long
+        name: string
+        dt: string
+        ts: long
+        __op: string
+      cdcFormat: op-column
+      opColumn: __op
+      options:
+        startingOffsets: earliest
+        maxOffsetsPerTrigger: 10000
+
+sink:
+  - id: hudi_orders
+    type: hudi-sink
+    dependency: kafka_orders
+    config:
+      table: orders
+      tablePath: "file:///tmp/pudding/hudi/orders"
+      operation: upsert
+      tableType: MERGE_ON_READ
+      recordKeyFields: [id]
+      preCombineField: ts
+      partitionPathField: dt
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/hudi-orders"
+      checkpointRetention: keep
+      cdcOpColumn: __op
+      cdcOrderFields: [_kafka_timestamp, _kafka_partition, _kafka_offset]

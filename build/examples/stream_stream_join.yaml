@@ -1,0 +1,83 @@
+job:
+  mode: streaming
+  appName: stream-stream-inner-join
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+source:
+  # One source can be split into two streaming branches and joined. Both sides need their own
+  # event-time column and watermark; only inner joins are supported.
+  - id: kafka_events
+    type: kafka-source
+    config:
+      kafkaBootstrapServers: "localhost:9092"
+      subscribe: events
+      valueFormat: json
+      valueSchema:
+        order_id: long
+        event_type: string
+        event_time: timestamp
+        amount: double
+        name: string
+      options:
+        startingOffsets: earliest
+
+transform:
+  - id: orders
+    type: filter-transform
+    dependencies: [kafka_events]
+    config:
+      condition: "event_type = 'order'"
+
+  - id: order_columns
+    type: column-transform
+    dependencies: [orders]
+    config:
+      fields:
+        - order_id
+        - name: order_time
+          source: event_time
+        - amount
+
+  - id: payments
+    type: filter-transform
+    dependencies: [kafka_events]
+    config:
+      condition: "event_type = 'payment'"
+
+  - id: payment_columns
+    type: column-transform
+    dependencies: [payments]
+    config:
+      fields:
+        - order_id
+        - name: payment_time
+          source: event_time
+        - name
+
+  - id: joined
+    type: join-transform
+    dependencies: [order_columns, payment_columns]
+    config:
+      left: order_columns
+      right: payment_columns
+      joinType: inner
+      on: [order_id]
+      leftEventTime: order_time
+      rightEventTime: payment_time
+      leftWatermark: "10 minutes"
+      rightWatermark: "10 minutes"
+
+sink:
+  - id: joined_output
+    type: file-sink
+    dependency: joined
+    config:
+      path: "file:///tmp/pudding/stream-join"
+      fileType: parquet
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/stream-join"
+      checkpointRetention: keep

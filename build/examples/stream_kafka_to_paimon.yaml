@@ -1,0 +1,43 @@
+job:
+  mode: streaming
+  appName: kafka-to-paimon-streaming
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+source:
+  - id: kafka_orders
+    type: kafka-source
+    config:
+      kafkaBootstrapServers: "localhost:9092"
+      subscribe: orders
+      valueFormat: json
+      valueSchema:
+        id: long
+        name: string
+        dt: string
+        __op: string
+      cdcFormat: op-column
+      opColumn: __op
+      options:
+        startingOffsets: earliest
+        maxOffsetsPerTrigger: 10000
+
+sink:
+  # Paimon 1.3.2 streaming requires path mode and a pre-created primary-key table.
+  - id: paimon_orders
+    type: paimon-sink
+    dependency: kafka_orders
+    config:
+      table: orders
+      path: "file:///tmp/pudding/paimon/default.db/orders"
+      primaryKey: [id, dt]
+      partition: [dt]
+      bucket: 1
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/paimon-orders"
+      checkpointRetention: keep
+      cdcOpColumn: __op
+      cdcOrderFields: [_kafka_timestamp, _kafka_partition, _kafka_offset]

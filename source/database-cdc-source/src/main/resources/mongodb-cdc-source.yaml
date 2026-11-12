@@ -1,0 +1,27 @@
+source:
+  - type: mongodb-cdc-source
+    describe: read MongoDB change streams as a Structured Streaming source
+    id: source-1
+    connection: mongodb
+    config:
+      database: inventory
+      collection: orders
+      # Required. _id must be present because MongoDB delete events only carry the document key.
+      schema: "_id string, name string, amount decimal(12, 2)"
+      # initial (snapshot then changes, default) or latest (changes from now)
+      snapshotMode: initial
+      maxRecordsPerBatch: 1000
+      # queueCapacity: 10000
+      # opColumn: __op
+      # maxAwaitTimeMs: 1000
+
+# The deployment must be a replica set or a sharded cluster. Updates use updateLookup, so the
+# full document is emitted as an upsert row. Deletes contain _id and nulls for other columns.
+#
+# connection:
+#   - name: mongodb
+#     type: mongodb
+#     endpoint: "mongodb://mongodb:27017/?replicaSet=rs0"
+#     auth:
+#       username: "pudding"
+#       password: "${secret:env/MONGO_PASSWORD}"

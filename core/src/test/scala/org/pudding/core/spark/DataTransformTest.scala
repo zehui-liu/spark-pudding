@@ -29,7 +29,7 @@ import scala.collection.mutable
 import scala.collection.immutable._
 
 /**
- * test for Transform
+ * Tests transform discovery, metadata propagation and DataFrame handling.
  */
 class DataTransformTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 

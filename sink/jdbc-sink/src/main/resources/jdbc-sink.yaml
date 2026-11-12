@@ -1,0 +1,19 @@
+sink:
+  - type: jdbc-sink
+    describe: batch, structured-streaming or sync-incremental writer through Spark's JDBC data sink
+    id: sink1
+    config:
+      # Never put credentials in a URL; provide them below or inject them server-side.
+      url: jdbc:postgresql://<hostname>:<port>/<database_name>?<parameters>
+      table: public.tbl
+      user: <user>
+      password: '<redacted>'
+      # Optional for PostgreSQL (org.postgresql.Driver is inferred); required for
+      # other databases, whose driver must also be available on the classpath.
+      # driver: org.postgresql.Driver
+      # append, overwrite, ignore, error or errorifexists
+      mode: append
+      # Additional Spark JDBC options.
+      options:
+        batchsize: '1000'
+    dependency: transform1

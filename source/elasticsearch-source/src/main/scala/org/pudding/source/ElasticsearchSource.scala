@@ -18,8 +18,9 @@
 package org.pudding.source
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
+
 import org.pudding.core.PuddingException
-import org.pudding.core.definition.DataSource
+import org.pudding.core.definition.{DataSource, SourceContext}
 
 /**
  * read data from elasticsearch 8
@@ -29,79 +30,128 @@ class ElasticsearchSource extends DataSource {
 
   private val ES_NODES_KEY = "esNodes"
   private val ES_PORT_KEY = "esPort"
-  private val ES_INDEX_KEY = "esIndex"
   private val ES_USER_KEY = "esUser"
   private val ES_PASS_KEY = "esPass"
-  private val ES_FIELDS_KEY = "fields"
-  private val ES_SCROLL_SIZE_KEY = "scrollSize"
   private val ES_LIMIT_KEY = "limit"
-  private val OPTIONS_KEY = "options"
 
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "elasticsearch-source"
 
-  /**
-   * Initial data source, use this.
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
+  override def supportedConnectionTypes: Set[String] = Set("elasticsearch")
+
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
-    // config parameter must exist
-    val cfg = config.getOrElse(throw new PuddingException("config can not be null!"))
+    this.initData(sparkSession, SourceContext(config))
+  }
 
-    val esNodes = this.getMapValueThrow[String](cfg, ES_NODES_KEY)
-    val esIndex = this.getMapValueThrow[String](cfg, ES_INDEX_KEY)
-
-    // optional parameters
-    val esPort = cfg.get(ES_PORT_KEY).map(_.toString).getOrElse("9200")
-    val esUser = cfg.get(ES_USER_KEY).map(_.toString)
-    val esPass = cfg.get(ES_PASS_KEY).map(_.toString)
-
-    val options = cfg.get(OPTIONS_KEY) match {
-      case Some(opt) => opt.asInstanceOf[Map[String, String]]
-      case None => Map.empty[String, String]
+  override def initData(sparkSession: SparkSession, context: SourceContext): DataFrame = {
+    val cfg = context.config.getOrElse(throw new PuddingException("config can not be null!"))
+    if (context.connection.isDefined) {
+      this.warnLegacyConnectionKeys(cfg)
     }
-
-    // Map internal config to elasticsearch-hadoop properties
-    val esProps = scala.collection.mutable.HashMap[String, String]()
-    esProps.put("es.nodes", esNodes)
-    esProps.put("es.port", esPort)
-    esProps.put("es.resource", esIndex)
-
-    // Authentication for ES 8
-    esUser.foreach(user => esProps.put("es.net.http.auth.user", user))
-    esPass.foreach(pass => esProps.put("es.net.http.auth.pass", pass))
-
-    // Field selection: es.read.field.include
-    cfg.get(ES_FIELDS_KEY).foreach {
-      case s: String => esProps.put("es.read.field.include", s)
-      case l: List[_] => esProps.put("es.read.field.include", l.mkString(","))
-      case seq: Seq[_] => esProps.put("es.read.field.include", seq.mkString(","))
-      case other => esProps.put("es.read.field.include", other.toString)
-    }
-
-    // Scroll size: es.scroll.size
-    cfg.get(ES_SCROLL_SIZE_KEY).foreach(s => esProps.put("es.scroll.size", s.toString))
-
-    // Merge additional options
-    options.foreach { case (k, v) => esProps.put(k, v) }
+    val esProps = ElasticsearchSource.readerOptions(context)
 
     val df = sparkSession
       .read
       .format("org.elasticsearch.spark.sql")
-      .options(esProps.toMap)
+      .options(esProps)
       .load()
 
     // Limit data amount
-    cfg.get(ES_LIMIT_KEY) match {
-      case Some(l) => df.limit(l.toString.toInt)
+    cfg.get(ES_LIMIT_KEY).filter(_ != null) match {
+      case Some(value) =>
+        val limit = try {
+          value.toString.trim.toInt
+        } catch {
+          case _: NumberFormatException =>
+            throw new PuddingException(s"$ES_LIMIT_KEY must be an integer, but got: $value")
+        }
+        if (limit <= 0) {
+          throw new PuddingException(
+            s"$ES_LIMIT_KEY must be greater than zero, but got: $limit")
+        }
+        df.limit(limit)
       case None => df
+    }
+  }
+
+  private def warnLegacyConnectionKeys(cfg: Map[String, Any]): Unit = {
+    val legacyKeys = Seq(ES_NODES_KEY, ES_PORT_KEY, ES_USER_KEY, ES_PASS_KEY)
+      .filter(cfg.contains)
+    if (legacyKeys.nonEmpty) {
+      logWarning(
+        s"${legacyKeys.mkString(", ")} are ignored because an elasticsearch connection is configured")
+    }
+  }
+
+}
+
+private[source] object ElasticsearchSource extends org.pudding.core.EasyHandle {
+
+  def readerOptions(context: SourceContext): Map[String, String] = {
+    val cfg = context.config.getOrElse(throw new PuddingException("config can not be null!"))
+    val esIndex = requiredString(cfg, "esIndex")
+    val options = getStringOptions(cfg, "options")
+
+    val connectionOptions = context.connection match {
+      case Some(connection) =>
+        if (connection.`type` != "elasticsearch") {
+          throw new PuddingException(
+            s"elasticsearch-source requires an elasticsearch connection, " +
+              s"but got: ${connection.`type`}")
+        }
+        connection.options
+      case None =>
+        legacyConnectionOptions(cfg)
+    }
+
+    // Connection settings win over source options, so a source can not accidentally point the
+    // job at another cluster or replace credentials.
+    var properties = options ++ connectionOptions
+    properties += "es.resource" -> esIndex
+
+    cfg.get("fields").filter(_ != null).foreach {
+      case value: String =>
+        val fields = value.split(",").map(_.trim).filter(_.nonEmpty).mkString(",")
+        if (fields.nonEmpty) properties += "es.read.field.include" -> fields
+      case seq: Seq[_] =>
+        val fields = seq.map(_.toString.trim).filter(_.nonEmpty).mkString(",")
+        if (fields.nonEmpty) properties += "es.read.field.include" -> fields
+      case other => properties += "es.read.field.include" -> other.toString
+    }
+
+    cfg.get("scrollSize").filter(_ != null).foreach { value =>
+      val scrollSize = try {
+        value.toString.trim.toInt
+      } catch {
+        case _: NumberFormatException =>
+          throw new PuddingException(s"scrollSize must be an integer, but got: $value")
+      }
+      if (scrollSize <= 0) {
+        throw new PuddingException(
+          s"scrollSize must be greater than zero, but got: $scrollSize")
+      }
+      properties += "es.scroll.size" -> scrollSize.toString
+    }
+    properties
+  }
+
+  private def legacyConnectionOptions(cfg: Map[String, Any]): Map[String, String] = {
+    val esNodes = requiredString(cfg, "esNodes")
+    val esPort = cfg.get("esPort").filter(_ != null)
+      .map(_.toString.trim).filter(_.nonEmpty).getOrElse("9200")
+    var options = Map("es.nodes" -> esNodes, "es.port" -> esPort)
+    cfg.get("esUser").filter(_ != null).map(_.toString.trim).filter(_.nonEmpty)
+      .foreach(user => options += "es.net.http.auth.user" -> user)
+    cfg.get("esPass").filter(_ != null).map(_.toString).filter(_.nonEmpty)
+      .foreach(password => options += "es.net.http.auth.pass" -> password)
+    options
+  }
+
+  private def requiredString(cfg: Map[String, Any], key: String): String = {
+    cfg.get(key).filter(_ != null) match {
+      case Some(value: String) if value.trim.nonEmpty => value.trim
+      case Some(_: String) => throw new PuddingException(s"$key can not be empty!")
+      case Some(_) => throw new PuddingException(s"$key must be a string!")
+      case None => throw new PuddingException(s"can not find param: $key")
     }
   }
 }

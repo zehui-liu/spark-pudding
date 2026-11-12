@@ -1,0 +1,44 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark read kafka connection example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "read Kafka through a named connection"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: kafka-prod
+    type: kafka
+    endpoint: "broker-1:9092,broker-2:9092"
+    auth:
+      mechanism: SCRAM-SHA-512
+      username: pudding
+      password: "${secret:env/KAFKA_PASSWORD}"
+    properties:
+      security.protocol: SASL_SSL
+
+source:
+  - type: "kafka-source"
+    describe: "read order events"
+    id: "source-1"
+    connection: "kafka-prod"
+    config:
+      subscribe: "order-events"
+      options:
+        startingOffsets: "latest"
+        endingOffsets: "latest"
+
+sink:
+  - type: "console-sink"
+    describe: "display the result on the console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"

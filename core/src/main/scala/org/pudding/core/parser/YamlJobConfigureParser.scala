@@ -17,7 +17,7 @@
 
 package org.pudding.core.parser
 
-import scala.collection.immutable._
+import scala.util.control.NonFatal
 
 import org.json4s.jackson.{JsonMethods, Serialization}
 import org.json4s.{Formats, NoTypeHints}
@@ -33,12 +33,18 @@ class YamlJobConfigureParser extends JobConfigureParser {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
-    val jsonStr = io.circe.yaml.parser.parse(pipelineCfgStr) match {
-      case Right(json) => json.toString()
-      case Left(errorInfo) => throw new PuddingException(s"parser yaml file error: $errorInfo")
+    val configMap = try {
+      val jsonStr = io.circe.yaml.parser.parse(pipelineCfgStr) match {
+        case Right(json) => json.toString()
+        case Left(errorInfo) => throw new PuddingException(s"parser yaml file error: $errorInfo")
+      }
+      JsonMethods.parse(jsonStr).extract[Map[String, Any]]
+    } catch {
+      case error: PuddingException => throw error
+      case NonFatal(error) =>
+        throw new PuddingException(
+          s"parser yaml file error: ${error.getClass.getSimpleName}", error)
     }
-
-    val configMap = JsonMethods.parse(jsonStr).extract[Map[String, Any]]
     checkMapValueNull(configMap)
     defaultParse(configMap)
   }

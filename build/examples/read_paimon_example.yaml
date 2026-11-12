@@ -1,0 +1,40 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark paimon example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "read a Paimon table through a named Paimon catalog"
+  config:
+    spark.ui.enabled: "false"
+
+catalog:
+  - name: paimon_lake
+    type: paimon
+    properties:
+      warehouse: "hdfs://namenode:8020/paimon/warehouse"
+      metastore: "filesystem"
+
+source:
+  - type: "paimon-source"
+    describe: "read the latest full Paimon snapshot"
+    id: "source-1"
+    catalog: "paimon_lake"
+    config:
+      # The target database must already exist.
+      table: "sales.orders"
+      scanMode: "latest-full"
+      filterExpr: "dt >= '2026-01-01'"
+
+sink:
+  - type: "console-sink"
+    describe: "display the result on the console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"

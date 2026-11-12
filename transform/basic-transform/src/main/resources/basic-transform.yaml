@@ -1,0 +1,103 @@
+transform:
+  - type: filter-transform
+    describe: keep orders above a threshold
+    id: filter1
+    dependencies: [source1]
+    config:
+      condition: "amount >= 100"
+      numPartitions: 2
+
+  - type: column-transform
+    describe: select, rename and cast columns
+    id: columns1
+    dependencies: [filter1]
+    config:
+      fields:
+        - order_id
+        - name: user_name
+          source: user_id
+          type: string
+        - name: amount
+          type: string
+
+  - type: aggregate-transform
+    describe: aggregate by city
+    id: aggregate1
+    dependencies: [columns1]
+    config:
+      groupBy: [user_name]
+      aggregations:
+        - name: order_count
+          expr: "count(*)"
+        - name: total_amount
+          expr: "sum(cast(amount as double))"
+
+  - type: limit-transform
+    describe: keep the first rows
+    id: limit1
+    dependencies: [aggregate1]
+    config:
+      limit: 100
+
+# validate-transform checks required columns and SQL rules. quarantinePath is batch-only:
+#
+#  - type: validate-transform
+#    id: validate1
+#    dependencies: [source1]
+#    config:
+#      requiredColumns: [id, amount]
+#      rules:
+#        amount_positive: "amount > 0"
+#      mode: drop
+#      quarantinePath: /data/quarantine/orders
+#
+# Stateful streaming requires an event-time watermark. aggregate-transform also needs a window:
+#
+#  - type: aggregate-transform
+#    id: window_count
+#    dependencies: [source1]
+#    config:
+#      eventTime: order_time
+#      watermark: "10 minutes"
+#      window: "5 minutes"
+#      groupBy: [order_city]
+#      aggregations:
+#        order_count: "count(*)"
+#
+#  - type: dedup-transform
+#    id: dedup1
+#    dependencies: [source1]
+#    config:
+#      keys: [order_id]
+#      eventTime: order_time
+#      watermark: "10 minutes"
+#
+# Schema contracts fail on missing columns, type mismatches and unexpected columns:
+#
+#  - type: schema-contract-transform
+#    id: contract1
+#    dependencies: [source1]
+#    config:
+#      columns:
+#        order_id: long
+#        order_time: timestamp
+#      allowExtraColumns: false
+#
+# union-transform and join-transform take multiple dependencies:
+#
+#  - type: union-transform
+#    id: union1
+#    dependencies: [source1, source2]
+#    config:
+#      inputs: [source1, source2]
+#      mode: byName
+#      allowMissingColumns: true
+#
+#  - type: join-transform
+#    id: join1
+#    dependencies: [source1, source2]
+#    config:
+#      left: source1
+#      right: source2
+#      joinType: left
+#      on: [user_id]

@@ -1,0 +1,44 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark hudi catalog example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "read a Hudi table through a Hudi session catalog"
+  config:
+    spark.ui.enabled: "false"
+
+connection:
+  - name: hms-prod
+    type: hive-metastore
+    endpoint: "thrift://hms-1:9083,thrift://hms-2:9083"
+
+catalog:
+  - name: hudi_lake
+    type: hudi
+    connection: hms-prod
+    properties:
+      warehouse: "hdfs://namenode:8020/warehouse"
+
+source:
+  - type: "hudi-source"
+    describe: "read a Hudi snapshot table"
+    id: "source-1"
+    catalog: "hudi_lake"
+    config:
+      # The target database must already exist.
+      table: "sales.orders"
+      filterExpr: "dt >= '2026-01-01'"
+
+sink:
+  - type: "console-sink"
+    describe: "display the result on the console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"

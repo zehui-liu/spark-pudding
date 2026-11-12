@@ -1,0 +1,42 @@
+job:
+  mode: streaming
+  appName: mysql-cdc-to-paimon
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+connection:
+  - name: mysql
+    type: mysql
+    endpoint: "jdbc:mysql://mysql:3306/inventory"
+    auth:
+      username: "pudding"
+      password: "${secret:env/MYSQL_PASSWORD}"
+
+source:
+  - id: mysql_orders
+    type: mysql-cdc-source
+    connection: mysql
+    config:
+      database: inventory
+      table: orders
+      schema: "id bigint, name string, amount decimal(12, 2), updated_at timestamp"
+      snapshotMode: initial
+      maxRecordsPerBatch: 1000
+
+sink:
+  - id: paimon_orders
+    type: paimon-sink
+    dependency: mysql_orders
+    config:
+      table: orders
+      path: "file:///tmp/pudding/paimon/default.db/orders"
+      primaryKey: [id]
+      bucket: 1
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/paimon-orders"
+      checkpointRetention: keep
+      cdcOpColumn: __op
+      cdcOrderFields: [_cdc_timestamp, _cdc_sequence]

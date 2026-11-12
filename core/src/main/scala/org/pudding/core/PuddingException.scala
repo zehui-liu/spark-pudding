@@ -18,7 +18,7 @@
 package org.pudding.core
 
 /**
- * exception class
+ * Base runtime exception for configuration, validation and connector failures.
  */
 class PuddingException(message: String, throwable: Throwable) extends RuntimeException(message, throwable) {
 

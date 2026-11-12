@@ -1,0 +1,33 @@
+source:
+  - type: postgres-cdc-source
+    describe: read PostgreSQL logical replication changes as a Structured Streaming source
+    id: source-1
+    connection: postgres
+    config:
+      database: inventory
+      databaseSchema: public
+      table: orders
+      # Required: Spark Structured Streaming needs a stable schema across micro-batches.
+      schema: "id bigint, name string, amount decimal(12, 2)"
+      # initial (default), always, never, initial_only, exported, custom
+      snapshotMode: initial
+      maxRecordsPerBatch: 1000
+      # queueCapacity: 10000
+      # opColumn: __op
+      # Advanced Debezium options. slot.name and publication.name are derived from the captured
+      # table unless supplied here.
+      # options:
+      #   slot.name: "pudding_orders"
+      #   publication.name: "pudding_orders"
+      #   heartbeat.interval.ms: "10000"
+
+# PostgreSQL must use wal_level=logical and the configured role must be able to create a
+# publication and a replication slot.
+#
+# connection:
+#   - name: postgres
+#     type: jdbc
+#     endpoint: "jdbc:postgresql://postgres:5432/inventory"
+#     auth:
+#       user: "pudding"
+#       password: "${secret:env/POSTGRES_PASSWORD}"

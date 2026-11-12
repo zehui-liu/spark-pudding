@@ -1,0 +1,47 @@
+job:
+  mode: "batch"
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  appName: "spark read gravitino catalog example job"
+  master: "local[*]"
+  deployMode: "client"
+  describe: "resolve an Iceberg catalog through Gravitino metadata and read it natively"
+  config:
+    spark.ui.enabled: "false"
+    spark.sql.extensions: "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
+
+connection:
+  - name: gravitino-prod
+    type: gravitino
+    endpoint: "http://gravitino:8090"
+    auth:
+      token: "${secret:env/GRAVITINO_TOKEN}"
+
+catalog:
+  - name: lake
+    type: gravitino
+    connection: gravitino-prod
+    properties:
+      metalake: "prod"
+      catalog: "lakehouse"
+
+source:
+  - type: "iceberg-source"
+    describe: "read a table from the Gravitino-managed Iceberg catalog"
+    id: "source-1"
+    catalog: "lake"
+    config:
+      table: "sales.orders"
+      filterExpr: "dt >= '2026-01-01'"
+
+sink:
+  - type: "console-sink"
+    describe: "display the result on the console"
+    id: "sink1"
+    config:
+      isStreaming: false
+      numRows: 20
+      truncate: 50
+      vertical: false
+      printSchema: true
+    dependency: "source-1"

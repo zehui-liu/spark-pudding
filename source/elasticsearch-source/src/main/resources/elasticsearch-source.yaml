@@ -1,6 +1,6 @@
 source:
   - type: "elasticsearch-source"
-    describe: "read data from elasticsearch 8"
+    describe: "read data from Elasticsearch 8"
     id: "es-source-1"
     config:
       esNodes: "http://elasticsearch-host:9200"

@@ -1,0 +1,47 @@
+job:
+  mode: streaming
+  appName: kafka-to-iceberg-streaming
+  master: local[*]
+  deployMode: client
+  sparkHome: "${SPARK_HOME}"
+  sparkPuddingHome: "${PUDDING_HOME}"
+  trigger: "processing-time: 30 seconds"
+
+catalog:
+  - name: lake
+    type: iceberg
+    properties:
+      type: hadoop
+      warehouse: "file:///tmp/pudding/iceberg"
+
+source:
+  - id: kafka_orders
+    type: kafka-source
+    config:
+      kafkaBootstrapServers: "localhost:9092"
+      subscribe: orders
+      valueFormat: json
+      valueSchema:
+        id: long
+        name: string
+        __op: string
+      cdcFormat: op-column
+      opColumn: __op
+      options:
+        startingOffsets: earliest
+        maxOffsetsPerTrigger: 10000
+
+sink:
+  # The Iceberg table must exist before the streaming job starts.
+  - id: iceberg_orders
+    type: iceberg-sink
+    dependency: kafka_orders
+    catalog: lake
+    config:
+      table: sales.orders
+      outputMode: append
+      checkpointLocation: "file:///tmp/pudding/checkpoints/iceberg-orders"
+      checkpointRetention: keep
+      cdcOpColumn: __op
+      recordKeyFields: [id]
+      cdcOrderFields: [_kafka_timestamp, _kafka_partition, _kafka_offset]

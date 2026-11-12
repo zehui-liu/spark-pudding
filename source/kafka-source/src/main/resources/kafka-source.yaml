@@ -1,15 +1,19 @@
 source:
   - type: kafka-source
-    describe: read data from kafka, support streaming and batch
+    describe: read Kafka key/value, JSON, Avro or Protobuf CDC events in batch or streaming mode
     id: source-1
     config:
       kafkaBootstrapServers: localhost:9092
       subscribe: topic1
+      valueFormat: json
+      valueSchema:
+        id: long
+        name: string
+        __op: string
+      cdcFormat: op-column
+      opColumn: __op
+      # Streaming only: interval for the AdminClient latest-offset lag lookup. Default 30000 ms.
+      lagMetricsIntervalMs: 30000
       options:
+        # Streaming: use startingOffsets=earliest/latest. Batch may also use endingOffsets.
         startingOffsets: earliest
-        endingOffsets: latest
-        maxOffsetsPerTrigger: 1000
-        fetchOffsetRetries: 3
-        fetchMaxBytes: 52428800
-        autoOffsetReset: earliest
-        checkpointLocation: hdfs://uer/xxx

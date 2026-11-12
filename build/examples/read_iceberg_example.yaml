@@ -1,11 +1,11 @@
 job:
+  mode: "batch"
   sparkHome: "${SPARK_HOME}"
   sparkPuddingHome: "${PUDDING_HOME}"
   appName: "spark iceberg example job"
   master: "local[*]"
   deployMode: "client"
   describe: "spark iceberg test job"
-  enableHiveSupport: "true"
   config:
     spark.executor.memory: "1g"
     spark.executor.cores: "2"
@@ -21,8 +21,6 @@ source:
       table: "default.test_table"
       catalog: "spark_catalog"
       filterExpr: "date_col >= '2023-01-01'"
-      options:
-        basePath: "hdfs://namenode:port/path/to/warehouse"
       forceConvertSchema: true
       schema:
         id: "long"
@@ -32,7 +30,7 @@ source:
 
 sink:
   - type: "console-sink"
-    describe: "show data on console"
+    describe: "display the result on the console"
     id: "sink1"
     config:
       isStreaming: false

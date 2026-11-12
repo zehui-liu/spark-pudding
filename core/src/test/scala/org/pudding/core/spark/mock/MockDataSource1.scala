@@ -23,27 +23,14 @@ import org.pudding.core.definition.DataSource
 case class Person1(name: String, id: Int)
 
 /**
- *
+ * First source of the multi-source join test.
  */
 class MockDataSource1 extends DataSource {
 
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the configuration
-   *
-   * @return String
-   */
   override def identifier: String = "mock_source1"
 
-  /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
     import sparkSession.implicits._
     Seq(Person1("Alice", 1), Person1("Bob", 2), Person1("Charlie", 3)).toDF()
   }
-
 }

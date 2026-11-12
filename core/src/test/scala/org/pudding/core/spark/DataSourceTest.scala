@@ -27,7 +27,7 @@ import org.pudding.core.spark.mock.MockConf.{mockJobCfg, mockSourceCfg}
 import scala.collection.immutable._
 
 /**
- * test for DataSource
+ * Tests source discovery, connection/catalog binding and DataFrame handling.
  */
 class DataSourceTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 

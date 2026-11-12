@@ -1,0 +1,3 @@
+org.pudding.core.catalog.TestIcebergCatalogProvider
+org.pudding.core.catalog.TestHiveCatalogProvider
+org.pudding.core.catalog.TestGravitinoCatalogProvider

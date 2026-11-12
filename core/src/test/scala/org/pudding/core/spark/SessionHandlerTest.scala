@@ -20,10 +20,10 @@ package org.pudding.core.spark
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.pudding.core.configure.JobConf
+import org.pudding.core.configure.{JobConf, JobMode}
 
 /**
- * test for SessionHandler
+ * Tests Spark session configuration, catalog installation and conflict handling.
  */
 class SessionHandlerTest extends AnyFunSuite with Matchers with BeforeAndAfterAll {
 
@@ -31,16 +31,30 @@ class SessionHandlerTest extends AnyFunSuite with Matchers with BeforeAndAfterAl
     "",
     Option.empty[String],
     "local test",
-    "",
+    "local[2]",
     "",
     Option("describe"),
-    Option("true"),
-    Option(Map("spark.master" -> "local[2]"))
+    Option(Map("spark.master" -> "local[2]")),
+    JobMode.Batch
   )
 
   test("test local sparkSession") {
     val sparkSession = SessionHandler.apply().sparkSessionBuilder(mockJobConf)
-    assert(sparkSession.version == "3.2.0")
+    assert(sparkSession.version == org.apache.spark.SPARK_VERSION)
     sparkSession.close()
+  }
+
+  test("use job master when no runtime master is configured") {
+    val jobConf = mockJobConf.copy(
+      master = "local[2]",
+      config = Option(Map("spark.ui.enabled" -> "false"))
+    )
+
+    val sparkSession = SessionHandler.apply().sparkSessionBuilder(jobConf)
+    try {
+      sparkSession.sparkContext.master shouldBe "local[2]"
+    } finally {
+      sparkSession.close()
+    }
   }
 }

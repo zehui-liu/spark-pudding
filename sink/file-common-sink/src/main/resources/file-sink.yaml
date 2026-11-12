@@ -1,18 +1,22 @@
 sink:
   - type: file-sink
-    describe: file common sink,local file or hdfs file
+    describe: write CSV, text, JSON, Parquet or ORC files to a Hadoop-compatible filesystem
     id: sink1
     config:
       path: hdfs:///user/hive/test001.csv
-      filedType: csv
-      # when in batch write, saveMode is must exist
+      fileType: csv
+      # Required for batch writes: append, overwrite, ignore, error or errorifexists.
       saveMode: append
-      # support stream writer
-      streamingWriter: true
-      # when streamingWriter set ture,timeoutMs is optional, wait stream stop time, long type
+      # Streaming writer; legacy aliases: streamWrite, streamWriter, streamingWriter.
+      isStreaming: true
+      # Optional streaming query timeout in milliseconds; the query stops when it elapses.
       timeoutMs: 200
-      # when isStreaming set ture, outputMode is optional, default key is append
-      outputMode: overwrite
+      # Optional streaming output mode; a file sink supports only append.
+      outputMode: append
+      # optional; default is "<path>_checkpoint"
+      checkpointLocation: hdfs:///user/hive/test001_checkpoint
+      # optional; keep (default) or delete-on-success with a finite trigger
+      checkpointRetention: keep
       options:
         header: true
         delimiter: ","

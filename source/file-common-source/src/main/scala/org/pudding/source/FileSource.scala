@@ -17,22 +17,24 @@
 
 package org.pudding.source
 
+import java.util.Locale
+
+import scala.collection.JavaConverters._
+
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import org.pudding.core.PuddingException
-import org.pudding.core.definition.DataSource
-
-import java.util.Locale
+import org.pudding.core.configure.ExecutionMode
+import org.pudding.core.definition.{DataSource, SourceContext}
 
 /**
- * read data from file system,such as hdfs、 local file, support csv、text、json、parquet、orc file type.
+ * Reads CSV, text, JSON, Parquet or ORC files from a local filesystem or Hadoop-compatible
+ * storage in batch or streaming mode.
  */
 class FileSource extends DataSource {
 
-  /**
-   * json, csv, parquet, orc, text
-   */
+  /** One of `csv`, `text`, `json`, `parquet` or `orc`. */
   private val FILE_TYPE_KEY = "fileType"
 
   private val PATH_KEY = "path"
@@ -49,83 +51,112 @@ class FileSource extends DataSource {
 
   private val DEFAULT_TEXT_DELIMITER_KEY = ","
 
-  /**
-   * dataSource identifier, Require implementation of class unique, And consistent with the yaml configuration
-   *
-   * @return String
-   */
   override def identifier: String = "file-common-source"
 
-  /**
-   * Initial data source, use this. have a surprised
-   *
-   * @param sparkSession SparkSession
-   * @param config Option[Map[String, Any] Parameter configuration requires self parameter verification
-   * @return DataFrame
-   */
+  override def supportedExecutionModes: Set[ExecutionMode] =
+    Set(ExecutionMode.Batch, ExecutionMode.Streaming)
+
   override def initData(sparkSession: SparkSession, config: Option[Map[String, Any]]): DataFrame = {
-    // config parameter must exist
-    val cfg = config match {
+    this.initData(sparkSession, SourceContext(config))
+  }
+
+  override def initData(sparkSession: SparkSession, context: SourceContext): DataFrame = {
+    val cfg = context.config match {
       case Some(cfg) => cfg
       case None => throw new PuddingException("config can not be null!")
     }
 
-    // path and fileType must exist
-    val paths = this.getMapValueThrow[String](cfg, PATH_KEY).split(",")
-    val fileType = this.getMapValueThrow[String](cfg, FILE_TYPE_KEY)
-
-    // support steam or batch read, default batch read
-    val streamRead = cfg.getOrElse(STREAM_READ_KEY, false).asInstanceOf[Boolean]
-
-    // options parameter is optional
-    val options = cfg.get(OPTIONS_KEY) match {
-      case Some(options) => options.asInstanceOf[Map[String, String]]
-      case None => Map.empty[String, String]
+    val paths = this.requiredString(cfg, PATH_KEY)
+      .split(",").map(_.trim).filter(_.nonEmpty)
+    if (paths.isEmpty) {
+      throw new PuddingException(s"$PATH_KEY can not be empty!")
     }
+    val fileType = this.requiredString(cfg, FILE_TYPE_KEY)
 
-    // if true dataframe force converted schema type
-    val forceConvertSchema = cfg.get(FORCE_CONVERT_SCHEMA_KEY) match {
-      case Some(fcs) => fcs.asInstanceOf[Boolean]
-      case None => false
+    // The explicit execution mode wins; streamRead remains the connector-level fallback.
+    val streamRead = this.effectiveStreaming(
+      this.booleanValue(cfg, STREAM_READ_KEY).getOrElse(false),
+      context.executionMode)
+
+    val options = this.getStringOptions(cfg, OPTIONS_KEY)
+
+    val forceConvertSchema = this.booleanValue(cfg, FORCE_CONVERT_SCHEMA_KEY).getOrElse(false)
+
+    val configuredSchema = cfg.get(SCHEMA_KEY).filter(_ != null) match {
+      case Some(schemas: Map[_, _]) =>
+        Some(schemas.map {
+          case (name, schemaType) =>
+            if (name == null || schemaType == null) {
+              throw new PuddingException(s"$SCHEMA_KEY can not contain a null key or value")
+            }
+            name.toString -> schemaType.toString
+        }.toMap)
+      case Some(schemas: java.util.Map[_, _]) =>
+        Some(schemas.asScala.map {
+          case (name, schemaType) =>
+            if (name == null || schemaType == null) {
+              throw new PuddingException(s"$SCHEMA_KEY can not contain a null key or value")
+            }
+            name.toString -> schemaType.toString
+        }.toMap)
+      case Some(_) => throw new PuddingException(s"$SCHEMA_KEY must be a map")
+      case None => None
     }
 
     val fileCaseLowerType = fileType.toLowerCase(Locale.ROOT)
-    val originalDataFrame = fileCaseLowerType match {
-      case "csv" | "text" | "orc" | "parquet" | "json" =>
-        if (streamRead) {
-          // stream read data
-          val dataStreamReader = sparkSession.readStream.options(options)
-          dataStreamReader.format(fileCaseLowerType).load(paths.head)
-        } else {
-          // batch read data
-          val dataFrameReader = sparkSession.read.options(options)
-          dataFrameReader.format(fileCaseLowerType).load(paths: _*)
-        }
-      case _ =>
-        throw new PuddingException(s"unsupported file type: $fileType")
+    val supportedTypes = Set("csv", "text", "orc", "parquet", "json")
+    if (!supportedTypes.contains(fileCaseLowerType)) {
+      throw new PuddingException(s"unsupported file type: $fileType")
+    }
+
+    val originalDataFrame = if (streamRead) {
+      if (paths.length != 1) {
+        throw new PuddingException(
+          s"streamRead supports exactly one path, got ${paths.length}; " +
+            "read multiple directories as separate sources or use batch mode")
+      }
+
+      // Spark can not infer a schema for a streaming CSV or JSON source. Apply the
+      // configured schema at read time instead of relying on forceConvertSchema.
+      val streamingSchema = if (fileCaseLowerType == "csv" || fileCaseLowerType == "json") {
+        Some(configuredSchema.getOrElse(throw new PuddingException(
+          s"streamRead with fileType '$fileCaseLowerType' requires a configured schema, " +
+            "because Spark can not infer a streaming file schema")))
+      } else {
+        None
+      }
+
+      val dataStreamReader = sparkSession.readStream.options(options)
+      streamingSchema.foreach(schema => dataStreamReader.schema(this.createStructType(schema)))
+      dataStreamReader.format(fileCaseLowerType).load(paths.head)
+    } else {
+      val dataFrameReader = sparkSession.read.options(options)
+      dataFrameReader.format(fileCaseLowerType).load(paths: _*)
     }
 
     if (forceConvertSchema) {
-      val schemas = cfg.get(SCHEMA_KEY) match {
-        case Some(schemas) => schemas.asInstanceOf[Map[String, String]]
-        case None =>
-          throw new PuddingException(
-            "forceConvertSchema set true, schema parameter must be have value, please check configure!")
-      }
+      val schemas = configuredSchema.getOrElse(throw new PuddingException(
+        "forceConvertSchema set true, schema parameter must be have value, please check configure!"))
 
       // text file spark read line only have a string column, this code handle it to convert schema
       if (fileCaseLowerType == "text") {
-        val textDelimiter = cfg.get(TEXT_DELIMITER_KEY) match {
-          case Some(delimiter) => delimiter.asInstanceOf[String]
+        val textDelimiter = cfg.get(TEXT_DELIMITER_KEY).filter(_ != null) match {
+          case Some(delimiter: String) if delimiter.nonEmpty => delimiter
+          case Some(_: String) =>
+            throw new PuddingException(s"$TEXT_DELIMITER_KEY can not be empty!")
+          case Some(_) => throw new PuddingException(s"$TEXT_DELIMITER_KEY must be a string!")
           case None => DEFAULT_TEXT_DELIMITER_KEY
         }
 
         originalDataFrame.map(row => {
           val columns = row.getString(0).split(textDelimiter)
-          assert(columns.size >= schemas.size)
+          if (columns.size < schemas.size) {
+            throw new PuddingException(
+              s"text line has ${columns.size} columns, but $SCHEMA_KEY requires ${schemas.size}")
+          }
 
           var i = -1
-          val cols = schemas.map { case (k, v) =>
+          val cols = schemas.map { case (_, v) =>
             i += 1
             buildRow(columns(i), v)
           }.toSeq
@@ -139,11 +170,34 @@ class FileSource extends DataSource {
             s"schemas size is $schemasSize can not more" +
               s" than dataframe field size is $dataFrameLength, check schema configure!")
         }
-        originalDataFrame.show(2)
         originalDataFrame.select(this.getColumns(schemas).toArray: _*)
       }
     } else {
       originalDataFrame
+    }
+  }
+
+  private def requiredString(cfg: Map[String, Any], key: String): String = {
+    cfg.get(key).filter(_ != null) match {
+      case Some(value: String) if value.trim.nonEmpty => value.trim
+      case Some(_: String) => throw new PuddingException(s"$key can not be empty!")
+      case Some(_) => throw new PuddingException(s"$key must be a string!")
+      case None =>
+        throw new PuddingException(s"can not find param: $key, $key must be exist!")
+    }
+  }
+
+  private def booleanValue(cfg: Map[String, Any], key: String): Option[Boolean] = {
+    cfg.get(key).filter(_ != null).map {
+      case value: Boolean => value
+      case value: String =>
+        value.trim.toLowerCase(Locale.ROOT) match {
+          case "true" => true
+          case "false" => false
+          case other => throw new PuddingException(s"$key must be true or false, got '$other'")
+        }
+      case value =>
+        throw new PuddingException(s"$key must be a boolean, got ${value.getClass.getSimpleName}")
     }
   }
 }

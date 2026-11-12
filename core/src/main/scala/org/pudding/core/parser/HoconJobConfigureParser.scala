@@ -17,12 +17,12 @@
 
 package org.pudding.core.parser
 
-import scala.collection.JavaConverters.asScalaSetConverter
+import scala.collection.JavaConverters._
 
 import com.typesafe.config.{Config, ConfigFactory}
 
 import org.pudding.core.configure.JobPipelineConf
-import org.pudding.core.JobConfigureParser
+import org.pudding.core.{JobConfigureParser, PuddingException}
 
 /**
  * hocon configure parser
@@ -30,15 +30,30 @@ import org.pudding.core.JobConfigureParser
 class HoconJobConfigureParser extends JobConfigureParser {
 
   override def parseFromString(pipelineCfgStr: String): JobPipelineConf = {
-    val config = ConfigFactory.parseString(pipelineCfgStr)
-    val configMap = toMapConfig(config)
+    val configMap = try {
+      val config = ConfigFactory.parseString(pipelineCfgStr)
+      toMapConfig(config)
+    } catch {
+      case error: Exception =>
+        throw new PuddingException(
+          s"parser hocon file error: ${error.getClass.getSimpleName}", error)
+    }
     checkMapValueNull(configMap)
     defaultParse(configMap)
   }
 
   private def toMapConfig(config: Config): Map[String, Any] =
-    config.entrySet().asScala
-      .map(entry => (entry.getKey, entry.getValue.unwrapped()))
-      .toMap
+    convertValue(config.root().unwrapped()).asInstanceOf[Map[String, Any]]
+
+  /**
+   * typesafe config unwrapped values use java collections, convert them to scala collections
+   */
+  private def convertValue(value: Any): Any = value match {
+    case map: java.util.Map[_, _] =>
+      map.asScala.map { case (k, v) => k.toString -> convertValue(v) }.toMap
+    case list: java.util.List[_] =>
+      list.asScala.map(convertValue).toList
+    case other => other
+  }
 
 }
