@@ -65,7 +65,9 @@ private[integration] object ObjectStoreTestSupport {
   private val defaultSecretKey = "pudding-secret"
 
   private val defaultImage =
-    "minio/minio:RELEASE.2023-09-04T19-57-37Z"
+    sys.env.getOrElse(
+      "PUDDING_TEST_MINIO_IMAGE",
+      "quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z")
 
   final case class Context(
       endpoint: String,

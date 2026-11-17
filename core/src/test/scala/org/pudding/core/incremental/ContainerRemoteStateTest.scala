@@ -55,7 +55,7 @@ class ContainerRemoteStateTest
     sys.env.getOrElse("PUDDING_TEST_HDFS_IMAGE", "apache/hadoop:3.3.6")
 
   private val minioImage =
-    sys.env.getOrElse("PUDDING_TEST_MINIO_IMAGE", "minio/minio:RELEASE.2023-09-04T19-57-37Z")
+    sys.env.getOrElse("PUDDING_TEST_MINIO_IMAGE", "quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z")
 
   private val minioUser = "pudding"
 

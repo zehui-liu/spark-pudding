@@ -55,7 +55,7 @@ class IcebergS3FileIOTest extends AnyFunSuite with Matchers with BeforeAndAfterA
     sys.env.get("PUDDING_TESTCONTAINERS_REQUIRED").exists(_.trim.equalsIgnoreCase("true"))
 
   private val image =
-    sys.env.getOrElse("PUDDING_TEST_MINIO_IMAGE", "minio/minio:RELEASE.2023-09-04T19-57-37Z")
+    sys.env.getOrElse("PUDDING_TEST_MINIO_IMAGE", "quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z")
 
   private val user =
     sys.env.getOrElse("PUDDING_TEST_S3_ACCESS_KEY", "pudding")
