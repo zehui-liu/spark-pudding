@@ -54,8 +54,12 @@ class ContainerRemoteStateTest
   private val hdfsImage =
     sys.env.getOrElse("PUDDING_TEST_HDFS_IMAGE", "apache/hadoop:3.3.6")
 
+  // MinIO no longer serves anonymous pulls from Docker Hub or quay.io. Chainguard's
+  // rebuilt image is anonymously pullable; pin the multi-arch digest for reproducibility.
   private val minioImage =
-    sys.env.getOrElse("PUDDING_TEST_MINIO_IMAGE", "quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z")
+    sys.env.getOrElse(
+      "PUDDING_TEST_MINIO_IMAGE",
+      "cgr.dev/chainguard/minio@sha256:59953701f8f8d0de81aab456f0b0b6c0a1804119415559bf7ede79d944108879")
 
   private val minioUser = "pudding"
 

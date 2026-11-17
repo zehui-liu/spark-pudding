@@ -64,10 +64,12 @@ private[integration] object ObjectStoreTestSupport {
 
   private val defaultSecretKey = "pudding-secret"
 
+  // MinIO no longer serves anonymous pulls from Docker Hub or quay.io. Chainguard's
+  // rebuilt image is anonymously pullable; pin the multi-arch digest for reproducibility.
   private val defaultImage =
     sys.env.getOrElse(
       "PUDDING_TEST_MINIO_IMAGE",
-      "quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z")
+      "cgr.dev/chainguard/minio@sha256:59953701f8f8d0de81aab456f0b0b6c0a1804119415559bf7ede79d944108879")
 
   final case class Context(
       endpoint: String,

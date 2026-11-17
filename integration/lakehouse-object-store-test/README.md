@@ -16,7 +16,8 @@ PUDDING_TESTCONTAINERS_REQUIRED=true \
     -DwildcardSuites=org.pudding.integration.HudiObjectStoreTest,org.pudding.integration.PaimonObjectStoreTest
 ```
 
-The default image is `quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z`; override it with
+The default image is a digest-pinned Chainguard MinIO build
+(`cgr.dev/chainguard/minio@sha256:59953701...`); override it with
 `PUDDING_TEST_MINIO_IMAGE`.
 
 ## Run against an existing endpoint
