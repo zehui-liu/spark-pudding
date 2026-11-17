@@ -22,7 +22,7 @@
 
     <groupId>org.pudding</groupId>
     <artifactId>spark-pudding-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>spark-pudding</name>

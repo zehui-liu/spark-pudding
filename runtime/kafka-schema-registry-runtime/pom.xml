@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.pudding</groupId>
         <artifactId>runtime</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>kafka-schema-registry-runtime</artifactId>
