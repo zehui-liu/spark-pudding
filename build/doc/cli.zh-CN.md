@@ -17,7 +17,7 @@
 压缩包解压后是一个目录：
 
 ```text
-spark-pudding-1.0.0-SNAPSHOT/
+spark-pudding-1.0.0/
   bin/
     pudding                  统一入口
     pudding-client.jar       `pudding submit` 使用的提交 client
@@ -34,7 +34,7 @@ spark-pudding-1.0.0-SNAPSHOT/
 运行命令前先设置环境：
 
 ```shell
-export PUDDING_HOME=/opt/spark-pudding-1.0.0-SNAPSHOT
+export PUDDING_HOME=/opt/spark-pudding-1.0.0
 export JAVA_HOME=/path/to/jdk-11          # 也支持 JDK 17
 export PATH="$JAVA_HOME/bin:$PATH"
 export SPARK_HOME=/path/to/spark-3.4.0-bin-hadoop3
@@ -131,7 +131,7 @@ job:
   strategy: incremental
   appName: orders-incremental-sync
   sparkHome: /opt/spark-3.4.0-bin-hadoop3
-  sparkPuddingHome: /opt/spark-pudding-1.0.0-SNAPSHOT
+  sparkPuddingHome: /opt/spark-pudding-1.0.0
   master: yarn
   deployMode: cluster
   config:
@@ -185,13 +185,13 @@ client 会把作业配置写入仅提交用户可读的临时文件；cluster �
 指定该位置：
 
 ```shell
-hdfs dfs -put "$PUDDING_HOME" /apps/spark-pudding/1.0.0-SNAPSHOT
+hdfs dfs -put "$PUDDING_HOME" /apps/spark-pudding/1.0.0
 
 "$PUDDING_HOME/bin/pudding-client.jar" \
   -c "$PUDDING_HOME/conf/env.properties" \
   -j /etc/pudding/orders-sync.yaml \
   --target yarn \
-  --resourceBase hdfs:///apps/spark-pudding/1.0.0-SNAPSHOT
+  --resourceBase hdfs:///apps/spark-pudding/1.0.0
 ```
 
 ### Kubernetes 示例
@@ -203,7 +203,7 @@ hdfs dfs -put "$PUDDING_HOME" /apps/spark-pudding/1.0.0-SNAPSHOT
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://https://kubernetes.example:443" \
-  --image registry.example/spark-pudding:1.0.0-SNAPSHOT \
+  --image registry.example/spark-pudding:1.0.0 \
   --namespace data-platform \
   --service-account spark \
   --resource-base local:///opt/spark-pudding
@@ -351,7 +351,7 @@ lockTtlMs=600000
 
 # 升级前比较两个版本
 "$PUDDING_HOME/bin/pudding" capabilities diff \
-  /opt/spark-pudding-previous /opt/spark-pudding-1.0.0-SNAPSHOT
+  /opt/spark-pudding-previous /opt/spark-pudding-1.0.0
 ```
 
 声明的组件或 jar 缺失、manifest 格式错误时，`verify` 返回非零。`diff` 报告新增、删除和变化
@@ -430,7 +430,7 @@ Bearer token 从 `--auth-token-file` 或 `PUDDING_MAINTENANCE_TOKEN` 读取，�
 # 2. 构建镜像并加载到 kind
 "$PUDDING_HOME/bin/pudding" k8s build-image \
   --spark-home "$SPARK_HOME" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --kind-cluster pudding
 
 # 3. 提交作业
@@ -438,7 +438,7 @@ Bearer token 从 `--auth-token-file` 或 `PUDDING_MAINTENANCE_TOKEN` 读取，�
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://https://127.0.0.1:6443" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --namespace pudding-k8s-test \
   --service-account spark \
   --resource-base local:///opt/spark-pudding
@@ -452,7 +452,7 @@ Bearer token 从 `--auth-token-file` 或 `PUDDING_MAINTENANCE_TOKEN` 读取，�
 在源码树中，`pudding verify` 校验已组装的发行包：
 
 ```shell
-"$PUDDING_HOME/bin/pudding" verify build/target/spark-pudding-1.0.0-SNAPSHOT
+"$PUDDING_HOME/bin/pudding" verify build/target/spark-pudding-1.0.0
 ```
 
 它检查预期目录结构、jar、示例文件和能力 manifest。该命令只在源码检出中可用，不随发行包

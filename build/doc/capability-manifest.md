@@ -26,7 +26,7 @@ component's `jar` exists in the distribution.
 
 ```yaml
 schemaVersion: "2.1"
-productVersion: "1.0.0-SNAPSHOT"
+productVersion: "1.0.0"
 sparkVersion: "3.4.0"
 scalaBinaryVersion: "2.12"
 generatedAt: "2026-10-25T02:57:47Z"
@@ -35,7 +35,7 @@ components:
     type: mongodb-source
     className: org.pudding.source.MongodbSource
     module: mongodb-source
-    jar: mongodb-source-1.0.0-SNAPSHOT.jar
+    jar: mongodb-source-1.0.0.jar
     capabilities:
       connectionTypes: [mongodb]
       catalogTypes: []
@@ -46,7 +46,7 @@ components:
     type: filter-transform
     className: org.pudding.transform.FilterTransform
     module: basic-transform
-    jar: basic-transform-1.0.0-SNAPSHOT.jar
+    jar: basic-transform-1.0.0.jar
     capabilities:
       executionModes: [batch, streaming]
       preservesSyncIncrementalMetadata: true

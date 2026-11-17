@@ -18,7 +18,7 @@ setup, see [../k8s/README.md](../k8s/README.md).
 The archive unpacks into one directory:
 
 ```text
-spark-pudding-1.0.0-SNAPSHOT/
+spark-pudding-1.0.0/
   bin/
     pudding                  unified entry point
     pudding-client.jar       submission client used by `pudding submit`
@@ -35,7 +35,7 @@ spark-pudding-1.0.0-SNAPSHOT/
 Set the environment before running any command:
 
 ```shell
-export PUDDING_HOME=/opt/spark-pudding-1.0.0-SNAPSHOT
+export PUDDING_HOME=/opt/spark-pudding-1.0.0
 export JAVA_HOME=/path/to/jdk-11          # JDK 17 is also supported
 export PATH="$JAVA_HOME/bin:$PATH"
 export SPARK_HOME=/path/to/spark-3.4.0-bin-hadoop3
@@ -141,7 +141,7 @@ job:
   strategy: incremental
   appName: orders-incremental-sync
   sparkHome: /opt/spark-3.4.0-bin-hadoop3
-  sparkPuddingHome: /opt/spark-pudding-1.0.0-SNAPSHOT
+  sparkPuddingHome: /opt/spark-pudding-1.0.0
   master: yarn
   deployMode: cluster
   config:
@@ -195,13 +195,13 @@ If the library jars are not reachable from cluster nodes, copy the distribution 
 `--resourceBase` to the client jar:
 
 ```shell
-hdfs dfs -put "$PUDDING_HOME" /apps/spark-pudding/1.0.0-SNAPSHOT
+hdfs dfs -put "$PUDDING_HOME" /apps/spark-pudding/1.0.0
 
 "$PUDDING_HOME/bin/pudding-client.jar" \
   -c "$PUDDING_HOME/conf/env.properties" \
   -j /etc/pudding/orders-sync.yaml \
   --target yarn \
-  --resourceBase hdfs:///apps/spark-pudding/1.0.0-SNAPSHOT
+  --resourceBase hdfs:///apps/spark-pudding/1.0.0
 ```
 
 ### Kubernetes example
@@ -214,7 +214,7 @@ the Secret reference to the driver:
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://https://kubernetes.example:443" \
-  --image registry.example/spark-pudding:1.0.0-SNAPSHOT \
+  --image registry.example/spark-pudding:1.0.0 \
   --namespace data-platform \
   --service-account spark \
   --resource-base local:///opt/spark-pudding
@@ -367,7 +367,7 @@ connector classes.
 
 # Compare two releases before an upgrade
 "$PUDDING_HOME/bin/pudding" capabilities diff \
-  /opt/spark-pudding-previous /opt/spark-pudding-1.0.0-SNAPSHOT
+  /opt/spark-pudding-previous /opt/spark-pudding-1.0.0
 ```
 
 `verify` returns non-zero when a declared component or jar is missing or when the manifest is
@@ -450,7 +450,7 @@ The three Kubernetes commands are also documented in [../k8s/README.md](../k8s/R
 # 2. Build an image and load it into kind
 "$PUDDING_HOME/bin/pudding" k8s build-image \
   --spark-home "$SPARK_HOME" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --kind-cluster pudding
 
 # 3. Submit a job
@@ -458,7 +458,7 @@ The three Kubernetes commands are also documented in [../k8s/README.md](../k8s/R
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://https://127.0.0.1:6443" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --namespace pudding-k8s-test \
   --service-account spark \
   --resource-base local:///opt/spark-pudding
@@ -473,7 +473,7 @@ host Spark `conf` directory and other configuration directories are not included
 In the source tree, `pudding verify` checks an assembled distribution:
 
 ```shell
-"$PUDDING_HOME/bin/pudding" verify build/target/spark-pudding-1.0.0-SNAPSHOT
+"$PUDDING_HOME/bin/pudding" verify build/target/spark-pudding-1.0.0
 ```
 
 It validates the expected layout, jars, example files and the capability manifest. This command

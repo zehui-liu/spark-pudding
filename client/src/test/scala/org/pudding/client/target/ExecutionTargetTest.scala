@@ -1,8 +1,7 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
+ * Copyright 2024-2026 the spark-pudding authors
+ *
+ * Licensed under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
@@ -36,7 +35,7 @@ import scala.collection.mutable.ArrayBuffer
 class ExecutionTargetTest extends AnyFunSuite with Matchers
   with BeforeAndAfterAll with BeforeAndAfterEach {
 
-  private val coreJar = "pudding-core-1.0.0-SNAPSHOT.jar"
+  private val coreJar = "pudding-core-1.0.0.jar"
 
   private val sourceJar = "mock-source-1.0.jar"
 
@@ -256,7 +255,7 @@ class ExecutionTargetTest extends AnyFunSuite with Matchers
         "spark.master" -> "local[2]",
         "spark.executor.cores" -> "1",
         "spark.yarn.queue" -> "from-job"))
-    val resourceBase = "hdfs://namenode/apps/spark-pudding/1.0.0-SNAPSHOT"
+    val resourceBase = "hdfs://namenode/apps/spark-pudding/1.0.0"
     val target = YarnTarget.builder()
       .deployMode("cluster")
       .queue("root.analytics")
@@ -337,7 +336,7 @@ class ExecutionTargetTest extends AnyFunSuite with Matchers
       Map("spark.executor.instances" -> "2"))
     val target = KubernetesTarget.builder()
       .resourceBase("local:///opt/spark-pudding")
-      .image("registry.example/spark-pudding:1.0.0-SNAPSHOT")
+      .image("registry.example/spark-pudding:1.0.0")
       .namespace("data-platform")
       .serviceAccount("pudding-spark")
       .imagePullSecrets(Arrays.asList("regcred", "backup-regcred"))
@@ -355,7 +354,7 @@ class ExecutionTargetTest extends AnyFunSuite with Matchers
     plan.getAppResource shouldBe "local:///opt/spark-pudding/libs/" + coreJar
     plan.getJars.size shouldBe 2
     plan.getSparkConf.get("spark.kubernetes.container.image") shouldBe
-      "registry.example/spark-pudding:1.0.0-SNAPSHOT"
+      "registry.example/spark-pudding:1.0.0"
     plan.getSparkConf.get("spark.kubernetes.namespace") shouldBe "data-platform"
     plan.getSparkConf.get(
       "spark.kubernetes.authenticate.driver.serviceAccountName") shouldBe "pudding-spark"
@@ -507,7 +506,7 @@ class ExecutionTargetTest extends AnyFunSuite with Matchers
       "cluster",
       Map("spark.kubernetes.container.image" -> "job/image:1"))
     val target = KubernetesTarget.builder()
-      .resourceBase("hdfs:///apps/spark-pudding/1.0.0-SNAPSHOT")
+      .resourceBase("hdfs:///apps/spark-pudding/1.0.0")
       .jobSecret("pudding-job-config")
       .build()
 
@@ -520,7 +519,7 @@ class ExecutionTargetTest extends AnyFunSuite with Matchers
   test("kubernetes target rejects a local resource base") {
     val jobConf = job("k8s://https://cluster.example:443", "client", Map.empty)
     val target = KubernetesTarget.builder()
-      .image("registry.example/spark-pudding:1.0.0-SNAPSHOT")
+      .image("registry.example/spark-pudding:1.0.0")
       .resourceBase(distribution.toString)
       .build()
 

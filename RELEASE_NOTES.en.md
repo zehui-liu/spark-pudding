@@ -4,9 +4,17 @@ English | [简体中文](RELEASE_NOTES.md)
 
 ## v1.0.0 — 2026-11-12
 
-> Status: committed on branch `v-1.0` (commit `b08f4fa`). No release tag or push has been
-> created yet.
+> Status: released as `v1.0.0` on 2026-11-17. The tag points at the commit that passed the
+> final `mvn -B clean verify`.
 > Branch: `v-1.0`
+
+Release artifacts:
+
+- `spark-pudding-1.0.0.tar.gz`
+- `spark-pudding-1.0.0.tar.gz.sha512`
+
+The source headers and `NOTICE` are aligned with the Apache License 2.0, and the
+distribution verifies its capability manifest and all module jars after assembly.
 
 v1.0.0 expands the project from a single-purpose batch framework into a data integration
 framework with batch, incremental sync and streaming execution.

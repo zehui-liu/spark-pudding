@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ Copyright 2024-2026 the spark-pudding authors
+  ~
+  ~ Licensed under the Apache License, Version 2.0
   ~ (the "License"); you may not use this file except in compliance with
   ~ the License.  You may obtain a copy of the License at
   ~
@@ -23,8 +22,34 @@
 
     <groupId>org.pudding</groupId>
     <artifactId>spark-pudding-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
+
+    <name>spark-pudding</name>
+    <description>Batch, incremental sync and streaming data integration framework on Apache Spark</description>
+    <url>https://github.com/zehui-liu/spark-pudding</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>zehui-liu</id>
+            <name>spark-pudding authors</name>
+            <url>https://github.com/zehui-liu</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:zehui-liu/spark-pudding.git</connection>
+        <developerConnection>scm:git:git@github.com:zehui-liu/spark-pudding.git</developerConnection>
+        <url>https://github.com/zehui-liu/spark-pudding</url>
+    </scm>
 
     <modules>
         <module>client</module>

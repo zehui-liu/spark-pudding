@@ -46,14 +46,14 @@ available through the SDK's `SubmissionManager`:
 # YARN. Cluster deploy mode is the default.
 "$PUDDING_HOME/bin/pudding-client.jar" -c conf/env.properties -j examples/read_csv_example.yaml \
   --target yarn \
-  --resourceBase hdfs:///apps/spark-pudding/1.0.0-SNAPSHOT
+  --resourceBase hdfs:///apps/spark-pudding/1.0.0
 
 # Kubernetes. Cluster deploy mode is required.
 "$PUDDING_HOME/bin/pudding-client.jar" -c conf/env.properties -j examples/read_csv_example.yaml \
   --target kubernetes \
   --master k8s://https://kubernetes.example:443 \
   --resourceBase local:///opt/spark-pudding \
-  --k8s-image registry.example/spark-pudding:1.0.0-SNAPSHOT \
+  --k8s-image registry.example/spark-pudding:1.0.0 \
   --k8s-namespace data-platform \
   --k8s-service-account pudding-spark \
   --k8s-job-secret pudding-job-config \
@@ -121,7 +121,7 @@ service account role is separate; see `../build/k8s/README.md`.
 JobConfiguration job = JobConfiguration.fromFile(Paths.get("job.yaml"));
 
 ExecutionTarget target = YarnTarget.builder()
-        .resourceBase("hdfs:///apps/spark-pudding/1.0.0-SNAPSHOT")
+        .resourceBase("hdfs:///apps/spark-pudding/1.0.0")
         .queue("root.data")
         .deployMode("cluster")
         .sparkConf("spark.executor.instances", "4")
@@ -172,7 +172,7 @@ ExecutionTarget k8sPrimary = ExecutionTarget.named("k8s-primary",
         KubernetesTarget.builder()
                 .master("k8s://https://kubernetes.example:443")
                 .namespace("data-platform")
-                .image("registry.example/spark-pudding:1.0.0-SNAPSHOT")
+                .image("registry.example/spark-pudding:1.0.0")
                 .resourceBase("local:///opt/spark-pudding")
                 .kubeconfig("/etc/pudding/kubeconfig")
                 .build());
@@ -217,7 +217,7 @@ does not cancel work already submitted through it.
 ExecutionTarget target = KubernetesTarget.builder()
         .master("k8s://https://kubernetes.example:443")
         .resourceBase("local:///opt/spark-pudding")
-        .image("registry.example/spark-pudding:1.0.0-SNAPSHOT")
+        .image("registry.example/spark-pudding:1.0.0")
         .namespace("data-platform")
         .serviceAccount("pudding-spark")
         .imagePullSecrets(Arrays.asList("regcred"))

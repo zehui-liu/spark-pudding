@@ -29,7 +29,7 @@ Build the distribution first:
 
 ```shell
 mvn -B verify
-export PUDDING_HOME="$PWD/build/target/spark-pudding-1.0.0-SNAPSHOT"
+export PUDDING_HOME="$PWD/build/target/spark-pudding-1.0.0"
 export SPARK_HOME=/path/to/spark-3.4.0-bin-hadoop3
 ```
 
@@ -55,7 +55,7 @@ kind API server URL.
 ```shell
 "$PUDDING_HOME/bin/pudding" k8s build-image \
   --spark-home "$SPARK_HOME" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --kind-cluster pudding
 ```
 
@@ -86,7 +86,7 @@ API_SERVER="$(kubectl --context kind-pudding config view --minify \
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://$API_SERVER" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --namespace pudding-k8s-test \
   --service-account spark \
   --resource-base local:///opt/spark-pudding \
@@ -116,7 +116,7 @@ kubectl --context kind-pudding -n pudding-k8s-test create secret generic \
   -c "$PUDDING_HOME/conf/env.k8s.properties" \
   -j "$PUDDING_HOME/k8s/job-example.yaml" \
   --master "k8s://$API_SERVER" \
-  --image spark-pudding:1.0.0-SNAPSHOT \
+  --image spark-pudding:1.0.0 \
   --namespace pudding-k8s-test \
   --service-account spark \
   --job-secret pudding-job-config

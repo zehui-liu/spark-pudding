@@ -40,8 +40,8 @@ mvn clean verify
 构建产物：
 
 ```text
-build/target/spark-pudding-1.0.0-SNAPSHOT/
-build/target/spark-pudding-1.0.0-SNAPSHOT.tar.gz
+build/target/spark-pudding-1.0.0/
+build/target/spark-pudding-1.0.0.tar.gz
 ```
 
 根 `pom.xml` 中的 `spark.version` 是项目构建和测试所针对的版本。Kubernetes 镜像和提交主机的
@@ -101,9 +101,9 @@ job:
 1. 解压发行包并设置环境：
 
 ```shell
-mkdir -p spark-pudding-1.0.0-SNAPSHOT
-tar -xzf spark-pudding-1.0.0-SNAPSHOT.tar.gz -C spark-pudding-1.0.0-SNAPSHOT
-export PUDDING_HOME="$PWD/spark-pudding-1.0.0-SNAPSHOT"
+mkdir -p spark-pudding-1.0.0
+tar -xzf spark-pudding-1.0.0.tar.gz -C spark-pudding-1.0.0
+export PUDDING_HOME="$PWD/spark-pudding-1.0.0"
 export JAVA_HOME=/path/to/jdk-11
 # 也支持 JDK 17：export JAVA_HOME=/path/to/jdk-17
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -127,13 +127,13 @@ YARN_CONF_DIR=/path/to/hadoop/etc/hadoop
 job:
   mode: batch
   sparkHome: '/path/to/spark-3.4.0-bin-hadoop3'
-  sparkPuddingHome: '/path/to/spark-pudding-1.0.0-SNAPSHOT'
+  sparkPuddingHome: '/path/to/spark-pudding-1.0.0'
   master: local[*]
   deployMode: client
 source:
   - type: file-common-source
     config:
-      path: '/path/to/spark-pudding-1.0.0-SNAPSHOT/examples/data/demo.csv'
+      path: '/path/to/spark-pudding-1.0.0/examples/data/demo.csv'
       fileType: csv
 ```
 
@@ -1029,7 +1029,7 @@ client 会为作业使用的每个 connector 添加对应的 runtime jar。
 
 ```yaml
 schemaVersion: "2.1"
-productVersion: "1.0.0-SNAPSHOT"
+productVersion: "1.0.0"
 sparkVersion: "3.4.0"
 scalaBinaryVersion: "2.12"
 components:
@@ -1037,7 +1037,7 @@ components:
     type: mongodb-source
     className: org.pudding.source.MongodbSource
     module: mongodb-source
-    jar: mongodb-source-1.0.0-SNAPSHOT.jar
+    jar: mongodb-source-1.0.0.jar
     capabilities:
       connectionTypes: [mongodb]
       catalogTypes: []
@@ -1123,8 +1123,8 @@ SDK 和全部 client 选项见 [client/README.md](client/README.md)；每个 `pu
   --master yarn \
   --deploy-mode cluster \
   --files "$PUDDING_HOME/examples/read_csv_example.json" \
-  --jars "$PUDDING_HOME/libs/console-sink-1.0.0-SNAPSHOT.jar,$PUDDING_HOME/libs/file-common-source-1.0.0-SNAPSHOT.jar" \
-  "$PUDDING_HOME/libs/pudding-core-1.0.0-SNAPSHOT.jar" \
+  --jars "$PUDDING_HOME/libs/console-sink-1.0.0.jar,$PUDDING_HOME/libs/file-common-source-1.0.0.jar" \
+  "$PUDDING_HOME/libs/pudding-core-1.0.0.jar" \
   --confType json \
   --jobFile read_csv_example.json
 ```
