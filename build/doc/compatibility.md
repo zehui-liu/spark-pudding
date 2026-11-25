@@ -2,7 +2,8 @@
 
 Spark Pudding targets one Spark baseline per release. Connector runtimes and lakehouse format
 libraries are binary-bound to that baseline, so the versions below form a tested set rather than
-independent options.
+independent options. The product version policy, release lines and branch rules are defined in
+[versioning.md](versioning.md).
 
 ## Build and runtime matrix
 
