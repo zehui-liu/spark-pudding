@@ -15,9 +15,14 @@
 
 ## Release Notes
 
-未发布 `1.0.0` 版本的能力时间线和升级注意事项见
+`1.0` 版本线的能力时间线和升级注意事项见
 [RELEASE_NOTES.md](RELEASE_NOTES.md)（中文）和
 [RELEASE_NOTES.en.md](RELEASE_NOTES.en.md)（English）。
+
+## 版本策略
+
+产品版本规则、Spark 兼容线、分支模型和发布产物见
+[build/doc/versioning.zh-CN.md](build/doc/versioning.zh-CN.md)。
 
 ## 从源码构建
 

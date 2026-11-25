@@ -16,9 +16,14 @@ company.
 
 ## Release notes
 
-The capability timeline and upgrade notes for the unreleased `1.0.0` line are recorded in
+The capability timeline and upgrade notes for the `1.0` line are recorded in
 [RELEASE_NOTES.en.md](RELEASE_NOTES.en.md) (English) and
 [RELEASE_NOTES.md](RELEASE_NOTES.md) (Chinese).
+
+## Versioning
+
+The product version rules, Spark compatibility lines, branch model and release artifacts are
+defined in [build/doc/versioning.md](build/doc/versioning.md).
 
 ## Building from source
 
